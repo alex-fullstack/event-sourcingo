@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mse-policy
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: mse-policy
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: mse-policy
+    spec:
+      containers:
+        - name: mse-policy-container
+          image: alexfullstack1981/mse-policy-image:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: BACKEND_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: policy-configmap
+                  key: BACKEND_ADDR
+            - name: USER_BACKEND_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: policy-configmap
+                  key: USER_BACKEND_ADDR
+            - name: MIGRATIONS_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: policy-configmap
+                  key: MIGRATIONS_PATH
+            - name: POSTGRES_MAX_CONN
+              valueFrom:
+                configMapKeyRef:
+                  name: policy-configmap
+                  key: POSTGRES_MAX_CONN
+            - name: KAFKA_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: policy-configmap
+                  key: KAFKA_ADDRESS
+            - name: KAFKA_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: policy-configmap
+                  key: KAFKA_TOPIC
+            - name: KAFKA_USER_CONSUMER_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: policy-configmap
+                  key: KAFKA_USER_CONSUMER_TOPIC
+            - name: KAFKA_USER_CONSUMER_GROUP
+              valueFrom:
+                configMapKeyRef:
+                  name: policy-configmap
+                  key: KAFKA_USER_CONSUMER_GROUP
+            - name: POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: "policy-secret"
+                  key: "postgres-url"
+            - name: MONGO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: "policy-secret"
+                  key: "mongo-url"

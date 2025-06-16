@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package backend;
+
+option go_package = "backend/generated/v1";
+
+service UserBackend {
+  rpc GetUserIDByEmail(UserIDRequest) returns (UserIDResponse) {}
+}
+
+message UserIDRequest {
+  string email = 1;
+}
+
+message UserIDResponse {
+  string id = 1;
+}

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: policy-configmap
+  namespace: default
+data:
+  BACKEND_ADDR: ':80'
+  USER_BACKEND_ADDR: '192.168.49.2:32301'
+  MIGRATIONS_PATH: 'app/migrations'
+  POSTGRES_MAX_CONN: '16'
+  KAFKA_ADDRESS: 'hostip:9092'
+  KAFKA_TOPIC: 'policy'
+  KAFKA_USER_CONSUMER_TOPIC: 'user'
+  KAFKA_USER_CONSUMER_GROUP: 'user-policy-group'

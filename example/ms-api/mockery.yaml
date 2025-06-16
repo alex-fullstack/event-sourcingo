@@ -1,0 +1,9 @@
+with-expecter: True
+filename: "./{{.PackageName}}/{{.InterfaceName}}.generated.go"
+outpkg: "{{.PackageName}}"
+packages:
+  api/internal/domain/usecase:
+    interfaces:
+      UserCases:
+        config:
+          dir: ./mocks

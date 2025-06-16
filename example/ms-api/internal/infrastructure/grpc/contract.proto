@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package backend;
+
+option go_package = "generated/v1";
+
+import "google/protobuf/empty.proto";
+
+service PolicyBackend {
+  rpc CheckRole(RoleCheckRequest) returns (google.protobuf.Empty) {}
+  rpc CheckPermission(PermissionCheckRequest) returns (google.protobuf.Empty) {}
+}
+
+message RoleCheckRequest {
+  string user_id = 1;
+  string role_code = 2;
+}
+
+message PermissionCheckRequest {
+  string user_id = 1;
+  string permission_code = 2;
+}

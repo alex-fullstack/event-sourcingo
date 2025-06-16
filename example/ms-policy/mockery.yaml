@@ -1,0 +1,25 @@
+with-expecter: True
+filename: "./{{.PackageName}}/{{.InterfaceName}}.generated.go"
+outpkg: "{{.PackageName}}"
+packages:
+  net/http:
+    interfaces:
+      Handler:
+        config:
+          dir: ./mocks
+      ResponseWriter:
+        config:
+          dir: ./mocks
+      Request:
+        config:
+          dir: ./mocks
+  user/internal/endpoints/api/v1:
+    interfaces:
+      Converter:
+        config:
+          dir: ./mocks
+  user/internal/domain/usecase:
+    interfaces:
+      APICases:
+        config:
+          dir: ./mocks

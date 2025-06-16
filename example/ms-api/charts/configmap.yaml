@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-configmap
+  namespace: default
+data:
+  FRONTEND_ADDR: ':80'
+  KAFKA_ADDRESS: 'hostip:9092'
+  KAFKA_USER_CONSUMER_TOPIC: 'user'
+  KAFKA_USER_CONSUMER_GROUP: 'user-api-group'
+  KAFKA_POLICY_CONSUMER_TOPIC: 'policy'
+  KAFKA_POLICY_CONSUMER_GROUP: 'policy-api-group'
+  ELASTICSEARCH_ADDRESS: 'http://hostip:9200'
+  ELASTICSEARCH_USERNAME: 'elastic'
+  POLICY_BACKEND_ADDR: '192.168.49.2:32400'

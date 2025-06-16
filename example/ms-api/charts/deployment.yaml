@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mse-api
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: mse-api
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: mse-api
+    spec:
+      containers:
+        - name: mse-api-container
+          image: alexfullstack1981/mse-api-image:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: FRONTEND_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: api-configmap
+                  key: FRONTEND_ADDR
+            - name: KAFKA_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: api-configmap
+                  key: KAFKA_ADDRESS
+            - name: KAFKA_USER_CONSUMER_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: api-configmap
+                  key: KAFKA_USER_CONSUMER_TOPIC
+            - name: KAFKA_USER_CONSUMER_GROUP
+              valueFrom:
+                configMapKeyRef:
+                  name: api-configmap
+                  key: KAFKA_USER_CONSUMER_GROUP
+            - name: KAFKA_POLICY_CONSUMER_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: api-configmap
+                  key: KAFKA_POLICY_CONSUMER_TOPIC
+            - name: KAFKA_POLICY_CONSUMER_GROUP
+              valueFrom:
+                configMapKeyRef:
+                  name: api-configmap
+                  key: KAFKA_POLICY_CONSUMER_GROUP
+            - name: ELASTICSEARCH_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: api-configmap
+                  key: ELASTICSEARCH_ADDRESS
+            - name: ELASTICSEARCH_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: api-configmap
+                  key: ELASTICSEARCH_USERNAME
+            - name: POLICY_BACKEND_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: api-configmap
+                  key: POLICY_BACKEND_ADDR
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "api-secret"
+                  key: "elasticsearch-password"
+            - name: ELASTICSEARCH_CERTIFICATE_FINGERPRINT
+              valueFrom:
+                secretKeyRef:
+                  name: "api-secret"
+                  key: "elasticsearch-certificate-fingerprint"
+            - name: ACCESS_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "api-secret"
+                  key: "access-token-secret"

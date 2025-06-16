@@ -1,0 +1,28 @@
+with-expecter: True
+filename: "./{{.PackageName}}/{{.InterfaceName}}.generated.go"
+outpkg: "{{.PackageName}}"
+packages:
+  gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities:
+    interfaces:
+      AggregateProvider:
+        config:
+          dir: ./mocks
+  gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/repositories:
+    interfaces:
+      EventStore:
+        config:
+          dir: ./mocks
+      ProjectionSaver:
+        config:
+          dir: ./mocks
+      Publisher:
+        config:
+          dir: ./mocks
+  gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services:
+    interfaces:
+      TransactionHandler:
+        config:
+          dir: ./mocks
+      EventHandler:
+        config:
+          dir: ./mocks

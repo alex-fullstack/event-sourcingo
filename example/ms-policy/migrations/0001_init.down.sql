@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS es.subscription;
+DROP TABLE IF EXISTS es.transactions;
+DROP TABLE IF EXISTS es.events;
+DROP TABLE IF EXISTS es.aggregates;
+DROP SCHEMA IF EXISTS "es";
