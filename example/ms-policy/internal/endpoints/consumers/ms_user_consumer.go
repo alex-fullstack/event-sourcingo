@@ -8,10 +8,10 @@ import (
 	"policy/internal/domain/usecase"
 	"policy/internal/infrastructure/kafka"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
+	"github.com/alex-fullstack/event-sourcingo/endpoints"
 	"github.com/google/uuid"
 	kafkaGo "github.com/segmentio/kafka-go"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/endpoints"
 )
 
 type consumer struct {
@@ -22,6 +22,7 @@ func NewMSUserConsumer(
 	baseContext context.Context,
 	cases usecase.MSUserCases,
 	cfg kafkaGo.ReaderConfig,
+	log *slog.Logger,
 ) endpoints.EndpointStarter {
 	reader := kafka.NewReader(
 		cfg,
@@ -60,6 +61,7 @@ func NewMSUserConsumer(
 		Endpoint: endpoints.NewEndpoint(
 			reader.StartListen,
 			reader.Shutdown,
+			log,
 		),
 	}
 }

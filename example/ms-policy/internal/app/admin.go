@@ -14,14 +14,14 @@ import (
 	"syscall"
 	"time"
 
+	coreEntities "github.com/alex-fullstack/event-sourcingo/domain/entities"
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/services"
+	coreConsumers "github.com/alex-fullstack/event-sourcingo/endpoints/consumers"
+	"github.com/alex-fullstack/event-sourcingo/infrastructure/kafka"
+	"github.com/alex-fullstack/event-sourcingo/infrastructure/postgresql"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/viper"
-	coreEntities "gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services"
-	coreConsumers "gitverse.ru/aleksandr-bebyakov/event-sourcingo/endpoints/consumers"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/infrastructure/kafka"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/infrastructure/postgresql"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"golang.org/x/sync/errgroup"
 )
@@ -29,6 +29,7 @@ import (
 const pauseTimeout = 100 * time.Millisecond
 
 func Execute(ctx context.Context, cmdName string, args ...string) error {
+	logger := slog.Default()
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	postgresCfg, err := pgxpool.ParseConfig(viper.GetString("postgres_url"))
@@ -68,7 +69,10 @@ func Execute(ctx context.Context, cmdName string, args ...string) error {
 	defer conn.Release()
 
 	publisher := kafka.NewWriter(
-		&kafka.Config{Address: viper.GetString("kafka_address"), Topic: viper.GetString("kafka_topic")},
+		&kafka.Config{
+			Address: viper.GetString("kafka_address"),
+			Topic:   viper.GetString("kafka_topic"),
+		},
 	)
 	defer func() {
 		err = publisher.Close()
@@ -81,7 +85,7 @@ func Execute(ctx context.Context, cmdName string, args ...string) error {
 		ctx,
 		"es.transaction-handled",
 		conn,
-		services.NewTransactionHandler(db, services.NewEventHandler(publisher)),
+		services.NewTransactionHandler(db, services.NewEventHandler(publisher), logger),
 		func(id uuid.UUID) coreEntities.AggregateProvider { return entities.NewPolicy(id) },
 	)
 	userRepository, err := grpc.NewClient(viper.GetString("user_backend_addr"))

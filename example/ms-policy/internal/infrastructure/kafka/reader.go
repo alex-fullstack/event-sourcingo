@@ -71,7 +71,9 @@ func (r *Reader) StartListen() error {
 func (r *Reader) Shutdown(ctx context.Context) error {
 	pollIntervalBase := time.Millisecond
 	nextPollInterval := func() time.Duration {
-		interval := pollIntervalBase + time.Duration(rand.IntN(int(pollIntervalBase/tenValue))) //nolint:gosec // proper rand
+		interval := pollIntervalBase + time.Duration(
+			rand.IntN(int(pollIntervalBase/tenValue)),
+		) //nolint:gosec // proper rand
 		pollIntervalBase *= 2
 		if pollIntervalBase > shutdownPollIntervalMax {
 			pollIntervalBase = shutdownPollIntervalMax

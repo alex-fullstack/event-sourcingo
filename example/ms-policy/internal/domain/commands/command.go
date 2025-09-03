@@ -4,8 +4,8 @@ import (
 	"policy/internal/domain/dto"
 	"policy/internal/domain/events"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/commands"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/commands"
 )
 
 type PolicyCommandType int
@@ -53,7 +53,10 @@ func NewUserAssignCommand(userID uuid.UUID) commands.Command {
 	return commands.NewCommand(
 		NewUserAssignCmd.Index(),
 		[]commands.CommandEvent{
-			commands.NewCommandEvent(events.UserAssigned.Index(), dto.NewUserAssignInput(userID.String())),
+			commands.NewCommandEvent(
+				events.UserAssigned.Index(),
+				dto.NewUserAssignInput(userID.String()),
+			),
 		},
 	)
 }

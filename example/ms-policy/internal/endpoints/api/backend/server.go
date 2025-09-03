@@ -31,7 +31,10 @@ func (s *server) CheckRole(ctx context.Context, data *v1.RoleCheckRequest) (*emp
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) CheckPermission(ctx context.Context, data *v1.PermissionCheckRequest) (*emptypb.Empty, error) {
+func (s *server) CheckPermission(
+	ctx context.Context,
+	data *v1.PermissionCheckRequest,
+) (*emptypb.Empty, error) {
 	dto, err := s.converter.ConvertPermissionCheck(data)
 	if err != nil {
 		return nil, err

@@ -9,11 +9,11 @@ import (
 	"regexp"
 	"slices"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/services"
 	"github.com/asaskevich/govalidator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services"
 )
 
 type AdminCases interface {

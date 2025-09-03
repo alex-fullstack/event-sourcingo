@@ -6,7 +6,7 @@ import (
 	"policy/internal/domain/dto"
 	"slices"
 
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services"
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/services"
 )
 
 type BackendAPICases interface {
@@ -19,7 +19,10 @@ type BackendAPIService struct {
 	handler    services.CommandHandler
 }
 
-func NewBackendAPIService(handler services.CommandHandler, repository PolicyRepository) *BackendAPIService {
+func NewBackendAPIService(
+	handler services.CommandHandler,
+	repository PolicyRepository,
+) *BackendAPIService {
 	return &BackendAPIService{handler: handler, repository: repository}
 }
 

@@ -26,7 +26,9 @@ func (c converter) ConvertRoleCheck(req *v1.RoleCheckRequest) (dto.RoleCheck, er
 	return dto.NewRoleCheck(userID, req.GetRoleCode()), nil
 }
 
-func (c converter) ConvertPermissionCheck(req *v1.PermissionCheckRequest) (dto.PermissionCheck, error) {
+func (c converter) ConvertPermissionCheck(
+	req *v1.PermissionCheckRequest,
+) (dto.PermissionCheck, error) {
 	userID, err := uuid.Parse(req.GetUserId())
 	if err != nil {
 		return dto.PermissionCheck{}, err

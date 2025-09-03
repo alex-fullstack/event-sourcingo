@@ -5,8 +5,8 @@ import (
 	"policy/internal/domain/commands"
 	"policy/internal/domain/entities"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/services"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services"
 )
 
 type MSUserCases interface {

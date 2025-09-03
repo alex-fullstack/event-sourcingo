@@ -5,9 +5,9 @@ import (
 	"policy/internal/domain/dto"
 	"policy/internal/domain/events"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/entities"
+	coreEvents "github.com/alex-fullstack/event-sourcingo/domain/events"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	coreEvents "gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
 )
 
 type Policy struct {
@@ -77,7 +77,9 @@ func (p *Policy) Projection() interface{} {
 func (p *Policy) IntegrationEvent(evType int) (coreEvents.IntegrationEvent, error) {
 	projection, ok := p.Projection().(dto.PolicyProjection)
 	if !ok {
-		return coreEvents.IntegrationEvent{}, errors.New("wrong data type, need dto.PolicyProjection")
+		return coreEvents.IntegrationEvent{}, errors.New(
+			"wrong data type, need dto.PolicyProjection",
+		)
 	}
 	return events.NewIntegrationEvent(evType, projection)
 }

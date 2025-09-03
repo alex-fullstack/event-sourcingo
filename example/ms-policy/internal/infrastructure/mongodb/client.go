@@ -73,7 +73,9 @@ func (db *MongoDB) GetByRoleCode(ctx context.Context, code string) (*dto.PolicyP
 }
 
 func (db *MongoDB) GetByUserID(ctx context.Context, id uuid.UUID) ([]dto.PolicyProjection, error) {
-	cur, err := db.conn.Database(databaseName).Collection(collectionName).Find(ctx, bson.M{"users": id.String()})
+	cur, err := db.conn.Database(databaseName).
+		Collection(collectionName).
+		Find(ctx, bson.M{"users": id.String()})
 	if err != nil {
 		return nil, err
 	}

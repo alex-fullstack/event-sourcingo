@@ -1,0 +1,39 @@
+variables:
+  GOLANGCI_LINT_VERSION: 'v2.4.0'
+lint:
+  image: golangci/golangci-lint:$GOLANGCI_LINT_VERSION
+  stage: test
+  script:
+    - golangci-lint run
+
+test:
+  stage: test
+  image: golang:latest
+  script:
+    - CGO_ENABLED=1 go test -race -v -cover ./internal/...
+
+build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  script:
+    - /kaniko/executor
+      --context "."
+      --dockerfile "./Dockerfile"
+      --destination "${CI_REGISTRY_USER}/mse-policy-image:${CI_COMMIT_SHORT_SHA}"
+      --destination "${CI_REGISTRY_USER}/mse-policy-image:latest"
+
+deploy:
+  stage: deploy
+  image: bitnami/kubectl
+  script:
+    - kubectl delete secret policy-secret -n=default --ignore-not-found
+    - kubectl create secret generic policy-secret -n=default --from-literal=postgres-url=$CI_POSTGRES_URL --from-literal=mongo-url=$CI_MONGO_URL
+    - kubectl apply -f charts/configmap.yaml
+    - kubectl apply -f charts/deployment.yaml
+    - kubectl apply -f charts/service.yaml
+    - kubectl set image deployment/mse-policy -n=default mse-policy-container=alexfullstack1981/mse-policy-image:${CI_COMMIT_SHORT_SHA}

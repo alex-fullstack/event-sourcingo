@@ -4,8 +4,8 @@ import (
 	"context"
 	"policy/internal/domain/dto"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/repositories"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/repositories"
 )
 
 type PolicyRepository interface {

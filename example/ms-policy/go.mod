@@ -1,8 +1,10 @@
 module policy
 
-go 1.23.4
+go 1.25.0
 
 require (
+	github.com/alex-fullstack/event-sourcingo v0.0.0-20250903093237-416bcd1a685b
+	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/uuid v1.6.0
@@ -10,16 +12,13 @@ require (
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.19.0
-	gitverse.ru/aleksandr-bebyakov/event-sourcingo v0.0.0-20250401181859-4d23dd149942
 	go.mongodb.org/mongo-driver/v2 v2.0.0
 	golang.org/x/sync v0.12.0
 	google.golang.org/grpc v1.64.1
 	google.golang.org/protobuf v1.34.2
-
 )
 
 require (
-	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

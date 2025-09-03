@@ -80,9 +80,15 @@ func (cli *AdminCli) assignUser(ctx context.Context, args ...string) error {
 }
 
 func (cli *AdminCli) init(ctx context.Context) error {
-	err := cli.cases.CreateRole(ctx, dto.NewRoleCreate(entities.UserRole.String(), entities.UserRoleName))
+	err := cli.cases.CreateRole(
+		ctx,
+		dto.NewRoleCreate(entities.UserRole.String(), entities.UserRoleName),
+	)
 	if err != nil {
 		return err
 	}
-	return cli.cases.CreateRole(ctx, dto.NewRoleCreate(entities.AdminRole.String(), entities.AdminRoleName))
+	return cli.cases.CreateRole(
+		ctx,
+		dto.NewRoleCreate(entities.AdminRole.String(), entities.AdminRoleName),
+	)
 }
