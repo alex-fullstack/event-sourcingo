@@ -7,12 +7,12 @@ import (
 	"user/internal/domain/commands"
 	"user/internal/domain/dto"
 	"user/internal/domain/entities"
-	"user/internal/domain/utils"
+	"user/internal/domain/helpers"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/services"
 	"github.com/go-ozzo/ozzo-validation/v4" //nolint:goimports // proper import
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services"
 )
 
 const (
@@ -32,7 +32,10 @@ type FrontendAPIService struct {
 	handler    services.CommandHandler
 }
 
-func NewFrontendAPIService(handler services.CommandHandler, repository UserRepository) *FrontendAPIService {
+func NewFrontendAPIService(
+	handler services.CommandHandler,
+	repository UserRepository,
+) *FrontendAPIService {
 	return &FrontendAPIService{handler: handler, repository: repository}
 }
 
@@ -42,7 +45,7 @@ func (s *FrontendAPIService) Sign(ctx context.Context, data dto.UserSign) error 
 		validation.Field(
 			&data.Credentials.Password,
 			validation.Required,
-			validation.Length(utils.MinPasswordLen, utils.MaxPasswordLen),
+			validation.Length(helpers.MinPasswordLen, helpers.MaxPasswordLen),
 		),
 	); err != nil {
 		return err
@@ -55,12 +58,15 @@ func (s *FrontendAPIService) Sign(ctx context.Context, data dto.UserSign) error 
 	)
 }
 
-func (s *FrontendAPIService) Login(ctx context.Context, data dto.UserLogin) (dto.AuthResult, error) {
+func (s *FrontendAPIService) Login(
+	ctx context.Context,
+	data dto.UserLogin,
+) (dto.AuthResult, error) {
 	user, err := s.repository.GetByEmail(ctx, data.Credentials.Email)
 	if err != nil {
 		return dto.AuthResult{}, err
 	}
-	err = utils.CheckPass(data.Credentials.Password, user.Credentials.PasswordHash)
+	err = helpers.CheckPass(data.Credentials.Password, user.Credentials.PasswordHash)
 	if err != nil {
 		return dto.AuthResult{}, err
 	}
@@ -72,7 +78,7 @@ func (s *FrontendAPIService) Login(ctx context.Context, data dto.UserLogin) (dto
 	if err != nil {
 		return dto.AuthResult{}, err
 	}
-	accessToken, refreshToken, err := utils.Auth(user.ID)
+	accessToken, refreshToken, err := helpers.Auth(user.ID)
 	if err != nil {
 		return dto.AuthResult{}, err
 	}
@@ -80,12 +86,15 @@ func (s *FrontendAPIService) Login(ctx context.Context, data dto.UserLogin) (dto
 	return dto.NewAuthResult(accessToken, refreshToken), nil
 }
 
-func (s *FrontendAPIService) RequestConfirm(ctx context.Context, data dto.UserRequestConfirmation) error {
+func (s *FrontendAPIService) RequestConfirm(
+	ctx context.Context,
+	data dto.UserRequestConfirmation,
+) error {
 	user, err := s.repository.Get(ctx, data.UserID)
 	if err != nil {
 		return err
 	}
-	code, err := utils.RandomInt(codeLength)
+	code, err := helpers.RandomInt(codeLength)
 	if err != nil {
 		return err
 	}
@@ -100,7 +109,10 @@ func (s *FrontendAPIService) RequestConfirm(ctx context.Context, data dto.UserRe
 	)
 }
 
-func (s *FrontendAPIService) Confirm(ctx context.Context, data dto.ConfirmInput) (confirmErr error) {
+func (s *FrontendAPIService) Confirm(
+	ctx context.Context,
+	data dto.ConfirmInput,
+) (confirmErr error) {
 	user, err := s.repository.Get(ctx, data.UserID)
 	if err != nil {
 		return err
@@ -116,7 +128,9 @@ func (s *FrontendAPIService) Confirm(ctx context.Context, data dto.ConfirmInput)
 			confirmErr = handleErr
 		}
 	}()
-	confirmErr = validation.Date(time.RFC3339).Min(time.Now()).Validate(user.Confirmation.Expired.Format(time.RFC3339))
+	confirmErr = validation.Date(time.RFC3339).
+		Min(time.Now()).
+		Validate(user.Confirmation.Expired.Format(time.RFC3339))
 	if confirmErr != nil {
 		return confirmErr
 	}

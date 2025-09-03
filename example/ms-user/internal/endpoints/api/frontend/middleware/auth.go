@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"user/internal/domain/utils"
+	"user/internal/domain/helpers"
 )
 
 type auth struct {
@@ -24,7 +24,7 @@ func (a *auth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := utils.Token(tokenString)
+	token, err := helpers.Token(tokenString)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return

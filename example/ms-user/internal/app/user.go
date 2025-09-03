@@ -16,20 +16,21 @@ import (
 	apiV1 "user/internal/endpoints/api/frontend/v1"
 	"user/internal/infrastructure/mongodb/auth"
 
+	coreEntities "github.com/alex-fullstack/event-sourcingo/domain/entities"
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/services"
+	"github.com/alex-fullstack/event-sourcingo/endpoints/consumers"
+	"github.com/alex-fullstack/event-sourcingo/infrastructure/kafka"
+	"github.com/alex-fullstack/event-sourcingo/infrastructure/postgresql"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/viper"
-	coreEntities "gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/endpoints/consumers"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/infrastructure/kafka"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/infrastructure/postgresql"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"golang.org/x/sync/errgroup"
 )
 
 func Run(ctx context.Context) error {
+	logger := slog.Default()
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	postgresCfg, err := pgxpool.ParseConfig(viper.GetString("postgres_url"))
@@ -55,20 +56,25 @@ func Run(ctx context.Context) error {
 	defer func() {
 		err = repository.Close(ctx)
 		if err != nil {
-			slog.Error(err.Error())
+			logger.Error(err.Error())
 		}
 	}()
 
-	frontendAPIService := usecase.NewFrontendAPIService(services.NewCommandHandler(db, repository), repository)
+	frontendAPIService := usecase.NewFrontendAPIService(
+		services.NewCommandHandler(db, repository),
+		repository,
+	)
 	frontendAPI := api.NewFrontendAPI(ctx, viper.GetString("frontend_addr"), func() http.Handler {
 		router := chi.NewRouter()
 		router.Mount("/api/v1/", apiV1.New(frontendAPIService, apiV1.NewConverter()))
 		return middleware.NewLogger(router)
-	}())
+	}(),
+		logger,
+	)
 
 	backendAPIService := usecase.NewBackendAPIService(repository)
 	backendAPIServer := backend.New(backend.NewConverter(), backendAPIService)
-	backendAPI := api.NewBackendAPI(backendAPIServer, viper.GetString("backend_addr"))
+	backendAPI := api.NewBackendAPI(ctx, backendAPIServer, viper.GetString("backend_addr"), logger)
 
 	conn, err := db.Acquire(ctx)
 	if err != nil {
@@ -76,7 +82,10 @@ func Run(ctx context.Context) error {
 	}
 
 	publisher := kafka.NewWriter(
-		&kafka.Config{Address: viper.GetString("kafka_address"), Topic: viper.GetString("kafka_topic")},
+		&kafka.Config{
+			Address: viper.GetString("kafka_address"),
+			Topic:   viper.GetString("kafka_topic"),
+		},
 	)
 	defer func() {
 		err = publisher.Close()
@@ -89,7 +98,7 @@ func Run(ctx context.Context) error {
 		ctx,
 		"es.transaction-handled",
 		conn,
-		services.NewTransactionHandler(db, handler),
+		services.NewTransactionHandler(db, handler, logger),
 		func(id uuid.UUID) coreEntities.AggregateProvider { return entities.NewUser(id) },
 	)
 	eg, ctx := errgroup.WithContext(ctx)

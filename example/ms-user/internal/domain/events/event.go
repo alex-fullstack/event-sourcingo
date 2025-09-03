@@ -4,7 +4,7 @@ import (
 	"time"
 	"user/internal/domain/dto"
 
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
 )
 
 type UserEventType int
@@ -77,6 +77,9 @@ func NewIntegrationEventPayload(projection dto.UserProjection) IntegrationEventP
 	return payload
 }
 
-func NewIntegrationEvent(evType int, projection dto.UserProjection) (events.IntegrationEvent, error) {
+func NewIntegrationEvent(
+	evType int,
+	projection dto.UserProjection,
+) (events.IntegrationEvent, error) {
 	return events.NewIntegrationEvent(projection.ID, evType, NewIntegrationEventPayload(projection))
 }

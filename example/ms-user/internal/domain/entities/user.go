@@ -6,9 +6,9 @@ import (
 	"user/internal/domain/dto"
 	"user/internal/domain/events"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/entities"
+	coreEvents "github.com/alex-fullstack/event-sourcingo/domain/events"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	coreEvents "gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
 )
 
 type User struct {
@@ -38,7 +38,9 @@ func NewUser(id uuid.UUID) *User {
 		case events.EmailConfirmed:
 			res.credentials.Confirmed = true
 			res.confirmation = nil
-		case events.UserConfirmationCompleted, events.UserConfirmationRequested, events.UserConfirmationRejected:
+		case events.UserConfirmationCompleted,
+			events.UserConfirmationRequested,
+			events.UserConfirmationRejected:
 			activity, err = NewActivity(Verification, payload)
 		default:
 			err = errors.New("unhandled default case")
@@ -58,12 +60,20 @@ func NewUser(id uuid.UUID) *User {
 func (u *User) Projection() interface{} {
 	history := make([]dto.ActivityRecord, len(u.activities))
 	for i, activity := range u.activities {
-		history[i] = dto.NewActivityRecord(activity.Timestamp, activity.Device, fmt.Sprint(activity.Type))
+		history[i] = dto.NewActivityRecord(
+			activity.Timestamp,
+			activity.Device,
+			fmt.Sprint(activity.Type),
+		)
 	}
 	var credentials *dto.CredentialsProjection
 	var confirmation *dto.ConfirmationProjection
 	if u.credentials != nil {
-		credentials = dto.NewCredentialsProjection(u.credentials.Email, u.credentials.PasswordHash, u.credentials.Confirmed)
+		credentials = dto.NewCredentialsProjection(
+			u.credentials.Email,
+			u.credentials.PasswordHash,
+			u.credentials.Confirmed,
+		)
 	}
 	if u.confirmation != nil {
 		confirmation = dto.NewConfirmationProjection(u.confirmation.Code, u.confirmation.Expired)

@@ -2,10 +2,11 @@ package api
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	v1 "user/internal/endpoints/api/backend/generated/v1"
 
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/endpoints"
+	"github.com/alex-fullstack/event-sourcingo/endpoints"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -14,7 +15,12 @@ type backendAPI struct {
 	*endpoints.Endpoint
 }
 
-func NewBackendAPI(backendServer v1.UserBackendServer, addr string) endpoints.EndpointStarter {
+func NewBackendAPI(
+	ctx context.Context,
+	backendServer v1.UserBackendServer,
+	addr string,
+	log *slog.Logger,
+) endpoints.EndpointStarter {
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	return &backendAPI{
@@ -22,7 +28,8 @@ func NewBackendAPI(backendServer v1.UserBackendServer, addr string) endpoints.En
 			func() error {
 				v1.RegisterUserBackendServer(grpcServer, backendServer)
 				reflection.Register(grpcServer)
-				lis, err := net.Listen("tcp", addr)
+				listenCtx := &net.ListenConfig{}
+				lis, err := listenCtx.Listen(ctx, "tcp", addr)
 				if err != nil {
 					return err
 				}
@@ -32,6 +39,7 @@ func NewBackendAPI(backendServer v1.UserBackendServer, addr string) endpoints.En
 				grpcServer.GracefulStop()
 				return nil
 			},
+			log,
 		),
 	}
 }

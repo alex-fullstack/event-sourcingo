@@ -52,36 +52,52 @@ func TestAuthMiddleware(t *testing.T) {
 			request:     &http.Request{},
 			mockAssertion: func(_ TestCase) {
 				writerMock.EXPECT().WriteHeader(http.StatusUnauthorized)
-				writerMock.EXPECT().Write([]byte(http.StatusText(http.StatusUnauthorized))).Return(401, nil)
+				writerMock.EXPECT().
+					Write([]byte(http.StatusText(http.StatusUnauthorized))).
+					Return(401, nil)
 			},
 		},
 		{
 			description: "Запрос с неправильным заголовком авторизации должен возвращать ошибку авторизации",
-			request:     &http.Request{Header: http.Header{"Authorization": []string{"Bea" + accessToken}}},
+			request: &http.Request{
+				Header: http.Header{"Authorization": []string{"Bea" + accessToken}},
+			},
 			mockAssertion: func(_ TestCase) {
 				writerMock.EXPECT().WriteHeader(http.StatusUnauthorized)
-				writerMock.EXPECT().Write([]byte(http.StatusText(http.StatusUnauthorized))).Return(401, nil)
+				writerMock.EXPECT().
+					Write([]byte(http.StatusText(http.StatusUnauthorized))).
+					Return(401, nil)
 			},
 		},
 		{
 			description: "Запрос с неправильным токеном авторизации должен возвращать ошибку авторизации",
-			request:     &http.Request{Header: http.Header{"Authorization": []string{"Bearer " + wrongAccessToken}}},
+			request: &http.Request{
+				Header: http.Header{"Authorization": []string{"Bearer " + wrongAccessToken}},
+			},
 			mockAssertion: func(_ TestCase) {
 				writerMock.EXPECT().WriteHeader(http.StatusUnauthorized)
-				writerMock.EXPECT().Write([]byte(http.StatusText(http.StatusUnauthorized))).Return(401, nil)
+				writerMock.EXPECT().
+					Write([]byte(http.StatusText(http.StatusUnauthorized))).
+					Return(401, nil)
 			},
 		},
 		{
 			description: "Запрос с истекшим токеном авторизации должен возвращать ошибку авторизации",
-			request:     &http.Request{Header: http.Header{"Authorization": []string{"Bearer " + expiredAccessToken}}},
+			request: &http.Request{
+				Header: http.Header{"Authorization": []string{"Bearer " + expiredAccessToken}},
+			},
 			mockAssertion: func(_ TestCase) {
 				writerMock.EXPECT().WriteHeader(http.StatusUnauthorized)
-				writerMock.EXPECT().Write([]byte(http.StatusText(http.StatusUnauthorized))).Return(401, nil)
+				writerMock.EXPECT().
+					Write([]byte(http.StatusText(http.StatusUnauthorized))).
+					Return(401, nil)
 			},
 		},
 		{
 			description: "Запрос с правильным заголовком авторизации должен пропускаться без ошибок",
-			request:     &http.Request{Header: http.Header{"Authorization": []string{"Bearer " + accessToken}}},
+			request: &http.Request{
+				Header: http.Header{"Authorization": []string{"Bearer " + accessToken}},
+			},
 			mockAssertion: func(tc TestCase) {
 				handlerMock.EXPECT().ServeHTTP(writerMock, tc.request)
 			},

@@ -4,7 +4,7 @@ import (
 	"user/internal/domain/dto"
 	"user/internal/domain/events"
 
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/commands"
+	"github.com/alex-fullstack/event-sourcingo/domain/commands"
 )
 
 type AuthCommandType int
@@ -23,7 +23,10 @@ func (uct AuthCommandType) Index() int {
 	return int(uct)
 }
 
-func NewSignCommand(credentials dto.CredentialsCreateInput, activity dto.ActivityInput) commands.Command {
+func NewSignCommand(
+	credentials dto.CredentialsCreateInput,
+	activity dto.ActivityInput,
+) commands.Command {
 	es := []commands.CommandEvent{
 		commands.NewCommandEvent(events.CredentialsCreated.Index(), credentials),
 		commands.NewCommandEvent(events.UserSigned.Index(), activity),

@@ -41,7 +41,11 @@ func TestRouter(t *testing.T) {
 		},
 		{
 			description: "Произвольный POST запрос должен возвращать статус 404",
-			request:     &http.Request{Method: http.MethodPost, URL: &url.URL{Path: ""}, Header: map[string][]string{}},
+			request: &http.Request{
+				Method: http.MethodPost,
+				URL:    &url.URL{Path: ""},
+				Header: map[string][]string{},
+			},
 			mockAssertion: func(_ TestCase) {
 				writerMock.EXPECT().Header().Return(map[string][]string{})
 				writerMock.EXPECT().WriteHeader(http.StatusNotFound)
@@ -56,7 +60,9 @@ func TestRouter(t *testing.T) {
 				Header: map[string][]string{},
 			},
 			mockAssertion: func(_ TestCase) {
-				converterMock.EXPECT().ConvertLogin(mock2.Anything).Return(dto.UserLogin{}, expectedErr)
+				converterMock.EXPECT().
+					ConvertLogin(mock2.Anything).
+					Return(dto.UserLogin{}, expectedErr)
 				converterMock.EXPECT().WriteError(writerMock, expectedErr, http.StatusBadRequest)
 			},
 		},

@@ -1,8 +1,9 @@
 module user
 
-go 1.23.4
+go 1.25.0
 
 require (
+	github.com/alex-fullstack/event-sourcingo v0.0.0-20250903093237-416bcd1a685b
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
@@ -12,13 +13,11 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	gitverse.ru/aleksandr-bebyakov/event-sourcingo v0.0.0-20250401181859-4d23dd149942
 	go.mongodb.org/mongo-driver/v2 v2.0.0
 	golang.org/x/crypto v0.33.0
 	golang.org/x/sync v0.11.0
 	google.golang.org/grpc v1.64.1
 	google.golang.org/protobuf v1.34.2
-
 )
 
 require (

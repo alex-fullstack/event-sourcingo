@@ -1,6 +1,6 @@
 package dto
 
-import "user/internal/domain/utils"
+import "user/internal/domain/helpers"
 
 type CredentialsCreate struct {
 	Email    string
@@ -37,7 +37,10 @@ func NewCredentialsProjection(email, password string, confirmed bool) *Credentia
 }
 
 func NewCredentialsCreateInput(create CredentialsCreate) CredentialsCreateInput {
-	return CredentialsCreateInput{Email: create.Email, PasswordHash: utils.HashPass(create.Password)}
+	return CredentialsCreateInput{
+		Email:        create.Email,
+		PasswordHash: helpers.HashPass(create.Password),
+	}
 }
 
 func NewAuthInput(email, password string) AuthInput {
