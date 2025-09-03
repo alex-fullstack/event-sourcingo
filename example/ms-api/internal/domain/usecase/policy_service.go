@@ -3,7 +3,7 @@ package usecase
 import (
 	"api/internal/domain/dto"
 	"api/internal/domain/entities"
-	"api/internal/domain/utils"
+	"api/internal/domain/helpers"
 	"context"
 	"slices"
 	"time"
@@ -43,7 +43,7 @@ func (p *PolicyService) OnUpsert(ctx context.Context, id uuid.UUID, data dto.Pol
 	}
 	var users []*entities.User
 	var err error
-	utils.Retry(
+	helpers.Retry(
 		func() bool {
 			users, err = p.userRepository.Get(ctx, ids)
 			userNotFound := false

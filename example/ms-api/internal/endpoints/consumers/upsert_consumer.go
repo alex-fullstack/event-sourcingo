@@ -4,11 +4,12 @@ import (
 	"api/internal/infrastructure/kafka"
 	"context"
 	"encoding/json"
+	"log/slog"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
+	"github.com/alex-fullstack/event-sourcingo/endpoints"
 	"github.com/google/uuid"
 	kafkaGo "github.com/segmentio/kafka-go"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/endpoints"
 )
 
 type upsertConsumer struct {
@@ -19,6 +20,7 @@ func newUpsertConsumer(
 	baseContext context.Context,
 	cfg kafkaGo.ReaderConfig,
 	handler func(ctx context.Context, message kafkaGo.Message) error,
+	log *slog.Logger,
 ) endpoints.EndpointStarter {
 	reader := kafka.NewReader(
 		cfg,
@@ -31,6 +33,7 @@ func newUpsertConsumer(
 		Endpoint: endpoints.NewEndpoint(
 			reader.StartListen,
 			reader.Shutdown,
+			log,
 		),
 	}
 }

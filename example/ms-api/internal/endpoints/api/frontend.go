@@ -2,11 +2,12 @@ package api
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
 
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/endpoints"
+	"github.com/alex-fullstack/event-sourcingo/endpoints"
 )
 
 const (
@@ -17,7 +18,12 @@ type frontendAPI struct {
 	*endpoints.Endpoint
 }
 
-func NewFrontendAPI(ctx context.Context, addr string, handler http.Handler) endpoints.EndpointStarter {
+func NewFrontendAPI(
+	ctx context.Context,
+	addr string,
+	handler http.Handler,
+	log *slog.Logger,
+) endpoints.EndpointStarter {
 	server := &http.Server{
 		Addr:              addr,
 		Handler:           handler,
@@ -29,6 +35,7 @@ func NewFrontendAPI(ctx context.Context, addr string, handler http.Handler) endp
 		Endpoint: endpoints.NewEndpoint(
 			server.ListenAndServe,
 			server.Shutdown,
+			log,
 		),
 	}
 }

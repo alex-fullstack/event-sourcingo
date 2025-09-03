@@ -17,7 +17,10 @@ type FrontendAPIService struct {
 	policyRepository PolicyRepository
 }
 
-func NewFrontendAPIService(userRepository UserRepository, policyRepository PolicyRepository) *FrontendAPIService {
+func NewFrontendAPIService(
+	userRepository UserRepository,
+	policyRepository PolicyRepository,
+) *FrontendAPIService {
 	return &FrontendAPIService{userRepository: userRepository, policyRepository: policyRepository}
 }
 

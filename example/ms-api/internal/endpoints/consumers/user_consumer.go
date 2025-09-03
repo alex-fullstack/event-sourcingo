@@ -6,15 +6,16 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/alex-fullstack/event-sourcingo/endpoints"
 	"github.com/google/uuid"
 	kafkaGo "github.com/segmentio/kafka-go"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/endpoints"
 )
 
 func NewUserConsumer(
 	baseContext context.Context,
 	cases usecase.UserCases,
 	cfg kafkaGo.ReaderConfig,
+	log *slog.Logger,
 ) endpoints.EndpointStarter {
 	return newUpsertConsumer(
 		baseContext,
@@ -33,6 +34,7 @@ func NewUserConsumer(
 			}
 			return nil
 		},
+		log,
 	)
 }
 

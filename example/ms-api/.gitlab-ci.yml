@@ -1,0 +1,39 @@
+variables:
+  GOLANGCI_LINT_VERSION: 'v2.4.0'
+lint:
+  image: golangci/golangci-lint:$GOLANGCI_LINT_VERSION
+  stage: test
+  script:
+    - golangci-lint run
+
+test:
+  stage: test
+  image: golang:latest
+  script:
+    - CGO_ENABLED=1 go test -race -v -cover ./internal/...
+
+build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  script:
+    - /kaniko/executor
+      --context "."
+      --dockerfile "./Dockerfile"
+      --destination "${CI_REGISTRY_USER}/mse-api-image:${CI_COMMIT_SHORT_SHA}"
+      --destination "${CI_REGISTRY_USER}/mse-api-image:latest"
+
+deploy:
+  stage: deploy
+  image: bitnami/kubectl
+  script:
+    - kubectl delete secret api-secret -n=default --ignore-not-found
+    - kubectl create secret generic api-secret -n=default --from-literal=elasticsearch-password=$CI_ELASTICSEARCH_PASSWORD --from-literal=elasticsearch-certificate-fingerprint=$CI_ELASTICSEARCH_CERTIFICATE_FINGERPRINT --from-literal=access-token-secret=$CI_ACCESS_TOKEN_SECRET
+    - kubectl apply -f charts/configmap.yaml
+    - kubectl apply -f charts/deployment.yaml
+    - kubectl apply -f charts/service.yaml
+    - kubectl set image deployment/mse-api -n=default mse-api-container=alexfullstack1981/mse-api-image:${CI_COMMIT_SHORT_SHA}

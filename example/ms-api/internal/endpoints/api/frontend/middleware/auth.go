@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"api/internal/domain/utils"
+	"api/internal/domain/helpers"
 	"net/http"
 	"strings"
 	"time"
@@ -24,7 +24,7 @@ func (a *auth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := utils.Token(tokenString)
+	token, err := helpers.Token(tokenString)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return

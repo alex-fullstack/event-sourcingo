@@ -23,6 +23,7 @@ import (
 )
 
 func Run(ctx context.Context) error {
+	logger := slog.Default()
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -45,7 +46,7 @@ func Run(ctx context.Context) error {
 		GroupID:   viper.GetString("kafka_user_consumer_group"),
 	}
 
-	userConsumer := consumers.NewUserConsumer(ctx, userService, userKafkaReaderCfg)
+	userConsumer := consumers.NewUserConsumer(ctx, userService, userKafkaReaderCfg, logger)
 
 	policyService := usecase.NewPolicyService(el)
 
@@ -56,7 +57,7 @@ func Run(ctx context.Context) error {
 		GroupID:   viper.GetString("kafka_policy_consumer_group"),
 	}
 
-	policyConsumer := consumers.NewPolicyConsumer(ctx, policyService, policyKafkaReaderCfg)
+	policyConsumer := consumers.NewPolicyConsumer(ctx, policyService, policyKafkaReaderCfg, logger)
 
 	policyRepository, err := grpc.NewClient(viper.GetString("policy_backend_addr"))
 	if err != nil {
@@ -69,11 +70,15 @@ func Run(ctx context.Context) error {
 		}
 	}()
 	frontendAPIService := usecase.NewFrontendAPIService(el, policyRepository)
-	frontendAPI := api.NewFrontendAPI(ctx, viper.GetString("frontend_addr"), func() http.Handler {
-		router := chi.NewRouter()
-		router.Mount("/api/v1/", apiV1.New(frontendAPIService, apiV1.NewConverter()))
-		return middleware.NewLogger(router)
-	}())
+	frontendAPI := api.NewFrontendAPI(
+		ctx, viper.GetString("frontend_addr"),
+		func() http.Handler {
+			router := chi.NewRouter()
+			router.Mount("/api/v1/", apiV1.New(frontendAPIService, apiV1.NewConverter()))
+			return middleware.NewLogger(router)
+		}(),
+		logger,
+	)
 
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
