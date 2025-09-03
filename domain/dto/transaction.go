@@ -1,7 +1,7 @@
 package dto
 
 type TransactionHandle struct {
-	Id          string `json:"id"`
-	SequenceId  string `json:"sequence_id"`
-	AggregateId string `json:"aggregate_id"`
+	ID          string `json:"id"`
+	SequenceID  string `json:"sequence_id"`
+	AggregateID string `json:"aggregate_id"`
 }

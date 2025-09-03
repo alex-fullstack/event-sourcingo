@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
@@ -19,19 +20,18 @@ type PostgresDB struct {
 	pool *pgxpool.Pool
 }
 
-func NewPostgresDB(ctx context.Context, config *pgxpool.Config) (db *PostgresDB, err error) {
+func NewPostgresDB(ctx context.Context, config *pgxpool.Config) (*PostgresDB, error) {
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		return
+		return nil, err
 	}
 	if err = pool.Ping(ctx); err != nil {
-		return
+		return nil, err
 	}
-	db = &PostgresDB{pool: pool}
-	return
+	return &PostgresDB{pool: pool}, nil
 }
 
-func (db *PostgresDB) Acquire(ctx context.Context) (c *pgxpool.Conn, err error) {
+func (db *PostgresDB) Acquire(ctx context.Context) (*pgxpool.Conn, error) {
 	return db.pool.Acquire(ctx)
 }
 
@@ -39,19 +39,33 @@ func (db *PostgresDB) Begin(ctx context.Context) (interface{}, error) {
 	return db.pool.Begin(ctx)
 }
 func (db *PostgresDB) Commit(ctx context.Context, tx interface{}) error {
-	return tx.(Transaction).Commit(ctx)
+	if transaction, ok := tx.(Transaction); ok {
+		return transaction.Commit(ctx)
+	}
+	return errors.New("transaction does not implement Transaction")
 }
 func (db *PostgresDB) Rollback(ctx context.Context, tx interface{}) error {
-	return tx.(Transaction).Rollback(ctx)
+	if transaction, ok := tx.(Transaction); ok {
+		return transaction.Rollback(ctx)
+	}
+	return errors.New("transaction does not implement Transaction")
 }
 
-func (db *PostgresDB) GetAggregateEvents(ctx context.Context, id uuid.UUID, tx interface{}) ([]events.Event, error) {
-	query := `SELECT aggregate_id, transaction_id, version, command_type, event_type, payload, created_at FROM es.events WHERE aggregate_id = @id`
+func (db *PostgresDB) GetAggregateEvents(
+	ctx context.Context,
+	id uuid.UUID,
+	tx interface{},
+) ([]events.Event, error) {
+	query := `SELECT aggregate_id, transaction_id, version, command_type, event_type, payload, created_at FROM es.events WHERE aggregate_id = @id` //nolint:lll
 	args := pgx.NamedArgs{
 		"id": id,
 	}
-
-	rows, err := tx.(Transaction).Query(ctx, query, args)
+	var transaction Transaction
+	var ok bool
+	if transaction, ok = tx.(Transaction); !ok {
+		return nil, errors.New("transaction does not implement Transaction")
+	}
+	rows, err := transaction.Query(ctx, query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -59,17 +73,36 @@ func (db *PostgresDB) GetAggregateEvents(ctx context.Context, id uuid.UUID, tx i
 
 	result := make([]events.Event, 0)
 	for rows.Next() {
-		var aggregateId, transactionId uuid.UUID
+		var aggregateID, transactionID uuid.UUID
 		var eventType, version, commandType int
 		var payload map[string]interface{}
 		var createdAt time.Time
 
-		err = rows.Scan(&aggregateId, &transactionId, &version, &commandType, &eventType, &payload, &createdAt)
+		err = rows.Scan(
+			&aggregateID,
+			&transactionID,
+			&version,
+			&commandType,
+			&eventType,
+			&payload,
+			&createdAt,
+		)
 		if err != nil {
 			return nil, err
 		}
 
-		result = append(result, events.Event{TransactionId: transactionId, AggregateId: aggregateId, CommandType: commandType, Type: eventType, Version: version, Payload: payload, CreatedAt: &createdAt})
+		result = append(
+			result,
+			events.Event{
+				TransactionID: transactionID,
+				AggregateID:   aggregateID,
+				CommandType:   commandType,
+				Type:          eventType,
+				Version:       version,
+				Payload:       payload,
+				CreatedAt:     &createdAt,
+			},
+		)
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err
@@ -78,40 +111,65 @@ func (db *PostgresDB) GetAggregateEvents(ctx context.Context, id uuid.UUID, tx i
 	return result, nil
 }
 
-func (db *PostgresDB) GetNewEventsAndHistory(ctx context.Context, id uuid.UUID, firstSequenceId, lastSequenceId int64, tx interface{}) ([]events.Event, []events.Event, error) {
-	query := `SELECT sequence_id::text, e.aggregate_id, transaction_id, version, command_type, event_type, payload, created_at FROM es.transactions AS t
-	JOIN es.events AS e
-	ON e.transaction_id=t.id
-	WHERE sequence_id <= @lastSequenceId::xid8 AND t.aggregate_id=@aggregateId
-	ORDER BY sequence_id`
+func (db *PostgresDB) GetNewEventsAndHistory(
+	ctx context.Context,
+	id uuid.UUID,
+	firstSequenceID, lastSequenceID int64,
+	tx interface{},
+) ([]events.Event, []events.Event, error) {
+	query := `SELECT sequence_id::text, e.aggregate_id, transaction_id, version, command_type, event_type, payload, created_at FROM es.transactions AS t JOIN es.events AS e ON e.transaction_id=t.id WHERE sequence_id <= @lastSequenceId::xid8 AND t.aggregate_id=@aggregateId ORDER BY sequence_id` //nolint:lll
 	args := pgx.NamedArgs{
-		"lastSequenceId": lastSequenceId,
+		"lastSequenceId": lastSequenceID,
 		"aggregateId":    id,
 	}
 	var history, newEvents []events.Event
-	rows, err := tx.(Transaction).Query(ctx, query, args)
+	var transaction Transaction
+	var ok bool
+	if transaction, ok = tx.(Transaction); !ok {
+		return []events.Event{}, []events.Event{}, errors.New(
+			"transaction does not implement Transaction",
+		)
+	}
+	rows, err := transaction.Query(ctx, query, args)
 	if err != nil {
 		return history, newEvents, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var sequenceId string
-		var aggregateId, transactionId uuid.UUID
+		var sequenceID string
+		var aggregateID, transactionID uuid.UUID
 		var eventType, version, commandType int
 		var payload map[string]interface{}
 		var createdAt time.Time
 
-		err = rows.Scan(&sequenceId, &aggregateId, &transactionId, &version, &commandType, &eventType, &payload, &createdAt)
+		err = rows.Scan(
+			&sequenceID,
+			&aggregateID,
+			&transactionID,
+			&version,
+			&commandType,
+			&eventType,
+			&payload,
+			&createdAt,
+		)
 		if err != nil {
 			return []events.Event{}, []events.Event{}, err
 		}
-		seqId, err := strconv.ParseInt(sequenceId, 10, 64)
-		if err != nil {
-			return []events.Event{}, []events.Event{}, err
+		seqID, errParse := strconv.ParseInt(sequenceID, 10, 64)
+		if errParse != nil {
+			return []events.Event{}, []events.Event{}, errParse
 		}
-		event := events.Event{TransactionId: transactionId, AggregateId: aggregateId, CommandType: commandType, Type: eventType, Version: version, Payload: payload, CreatedAt: &createdAt}
-		if seqId <= firstSequenceId {
+		event := events.Event{
+			TransactionID: transactionID,
+			AggregateID:   aggregateID,
+			CommandType:   commandType,
+			Type:          eventType,
+			Version:       version,
+			Payload:       payload,
+			CreatedAt:     &createdAt,
+		}
+		if seqID <= firstSequenceID {
 			history = append(history, event)
 		} else {
 			newEvents = append(newEvents, event)
@@ -123,52 +181,85 @@ func (db *PostgresDB) GetNewEventsAndHistory(ctx context.Context, id uuid.UUID, 
 	return history, newEvents, nil
 }
 
-func (db *PostgresDB) UpdateOrCreateAggregate(ctx context.Context, transactionId uuid.UUID, reader entities.AggregateReader, tx interface{}) (err error) {
+func (db *PostgresDB) UpdateOrCreateAggregate(
+	ctx context.Context,
+	transactionID uuid.UUID,
+	reader entities.AggregateReader,
+	tx interface{},
+) error {
 	currentVersion, nextVersion := reader.BaseVersion(), reader.Version()
+	var err error
+	var transaction Transaction
+	var ok bool
+	if transaction, ok = tx.(Transaction); !ok {
+		return errors.New("transaction does not implement Transaction")
+	}
 	if currentVersion == 0 {
-		err = db.createVersion(ctx, reader.ID(), nextVersion, tx.(Transaction))
+		err = db.createVersion(ctx, reader.ID(), nextVersion, transaction)
 	} else {
-		err = db.updateVersion(ctx, reader.ID(), currentVersion, nextVersion, tx.(Transaction))
+		err = db.updateVersion(ctx, reader.ID(), currentVersion, nextVersion, transaction)
 	}
 	if err != nil {
-		return
+		return err
 	}
-	err = db.insertEvents(ctx, reader.Changes(), tx.(Transaction))
+	err = db.insertEvents(ctx, reader.Changes(), transaction)
 	if err != nil {
-		return
+		return err
 	}
-	err = db.insertTransaction(ctx, transactionId, reader.ID(), tx.(Transaction))
-	return
+	return db.insertTransaction(ctx, transactionID, reader.ID(), transaction)
 }
 
 func (db *PostgresDB) Close() {
 	db.pool.Close()
 }
 
-func (db *PostgresDB) GetSubscription(ctx context.Context, tx interface{}) (*subscriptions.Subscription, error) {
+func (db *PostgresDB) GetSubscription(
+	ctx context.Context,
+	tx interface{},
+) (*subscriptions.Subscription, error) {
 	query := `SELECT last_sequence_id::text FROM es.subscription WHERE id = 1 FOR UPDATE SKIP LOCKED`
 
-	var lastSequenceId string
-	err := tx.(Transaction).QueryRow(ctx, query).Scan(&lastSequenceId)
+	var lastSequenceID string
+	var transaction Transaction
+	var ok bool
+	if transaction, ok = tx.(Transaction); !ok {
+		return nil, errors.New("transaction does not implement Transaction")
+	}
+	err := transaction.QueryRow(ctx, query).Scan(&lastSequenceID)
 	if err != nil {
 		return nil, err
 	}
-	sequenceId, err := strconv.ParseInt(lastSequenceId, 10, 64)
+	sequenceID, err := strconv.ParseInt(lastSequenceID, 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	return &subscriptions.Subscription{LastSequenceID: sequenceId}, nil
+	return &subscriptions.Subscription{LastSequenceID: sequenceID}, nil
 }
-func (db *PostgresDB) UpdateSubscription(ctx context.Context, sub *subscriptions.Subscription, tx interface{}) error {
+
+func (db *PostgresDB) UpdateSubscription(
+	ctx context.Context,
+	sub *subscriptions.Subscription,
+	tx interface{},
+) error {
 	query := `UPDATE es.subscription SET last_sequence_id = @lastSequenceId::xid8  WHERE id = 1`
 	args := pgx.NamedArgs{
 		"lastSequenceId": sub.LastSequenceID,
 	}
-	_, err := tx.(Transaction).Exec(ctx, query, args)
+	var transaction Transaction
+	var ok bool
+	if transaction, ok = tx.(Transaction); !ok {
+		return errors.New("transaction does not implement Transaction")
+	}
+	_, err := transaction.Exec(ctx, query, args)
 	return err
 }
 
-func (db *PostgresDB) createVersion(ctx context.Context, id uuid.UUID, version int, tx Transaction) error {
+func (db *PostgresDB) createVersion(
+	ctx context.Context,
+	id uuid.UUID,
+	version int,
+	tx Transaction,
+) error {
 	query := `INSERT INTO es.aggregates (id, version) VALUES (@id, @version)`
 	args := pgx.NamedArgs{
 		"id":      id,
@@ -177,7 +268,13 @@ func (db *PostgresDB) createVersion(ctx context.Context, id uuid.UUID, version i
 	_, err := tx.Exec(ctx, query, args)
 	return err
 }
-func (db *PostgresDB) updateVersion(ctx context.Context, id uuid.UUID, currentVersion, nextVersion int, tx Transaction) error {
+
+func (db *PostgresDB) updateVersion(
+	ctx context.Context,
+	id uuid.UUID,
+	currentVersion, nextVersion int,
+	tx Transaction,
+) error {
 	query := `UPDATE es.aggregates SET version = @nextVersion WHERE id = @id AND version = @currentVersion`
 	args := pgx.NamedArgs{
 		"id":             id,
@@ -188,15 +285,19 @@ func (db *PostgresDB) updateVersion(ctx context.Context, id uuid.UUID, currentVe
 	return err
 }
 
-func (db *PostgresDB) insertEvents(ctx context.Context, events []events.Event, tx Transaction) (err error) {
-	query := `INSERT INTO es.events (aggregate_id, transaction_id, version, command_type, event_type, payload) VALUES (@aggregateId, @transactionId, @version, @commandType, @eventType, @payload)`
+func (db *PostgresDB) insertEvents(
+	ctx context.Context,
+	events []events.Event,
+	tx Transaction,
+) (err error) {
+	query := `INSERT INTO es.events (aggregate_id, transaction_id, version, command_type, event_type, payload) VALUES (@aggregateId, @transactionId, @version, @commandType, @eventType, @payload)` //nolint:lll
 
 	batch := &pgx.Batch{}
 	for _, event := range events {
 		args := pgx.NamedArgs{
-			"aggregateId":   event.AggregateId,
+			"aggregateId":   event.AggregateID,
 			"version":       event.Version,
-			"transactionId": event.TransactionId,
+			"transactionId": event.TransactionID,
 			"eventType":     event.Type,
 			"commandType":   event.CommandType,
 			"payload":       event.Payload,
@@ -215,18 +316,22 @@ func (db *PostgresDB) insertEvents(ctx context.Context, events []events.Event, t
 	for range events {
 		_, err = results.Exec()
 		if err != nil {
-			return
+			return err
 		}
 	}
-	return
+	return nil
 }
 
-func (db *PostgresDB) insertTransaction(ctx context.Context, id, aggregateId uuid.UUID, tx Transaction) (err error) {
+func (db *PostgresDB) insertTransaction(
+	ctx context.Context,
+	id, aggregateID uuid.UUID,
+	tx Transaction,
+) error {
 	query := `INSERT INTO es.transactions (id, aggregate_id) VALUES (@id, @aggregateId)`
 	args := pgx.NamedArgs{
 		"id":          id,
-		"aggregateId": aggregateId,
+		"aggregateId": aggregateID,
 	}
-	_, err = tx.Exec(ctx, query, args)
-	return
+	_, err := tx.Exec(ctx, query, args)
+	return err
 }

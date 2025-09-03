@@ -3,7 +3,7 @@ package consumers
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"strconv"
 
 	"github.com/alex-fullstack/event-sourcingo/domain/dto"
@@ -21,31 +21,40 @@ type consumer struct {
 	*endpoints.Endpoint
 }
 
-func NewTransactionConsumer(ctx context.Context, ch string, conn *pgxpool.Conn, handler services.TransactionHandler, providerFn func(id uuid.UUID) entities.AggregateProvider) endpoints.EndpointStarter {
+func NewTransactionConsumer(
+	ctx context.Context,
+	ch string,
+	conn *pgxpool.Conn,
+	handler services.TransactionHandler,
+	providerFn func(id uuid.UUID) entities.AggregateProvider,
+) endpoints.EndpointStarter {
+	logger := slog.Default()
 	listener := postgresql.NewListener(
 		ch,
 		conn,
 		func(ctx context.Context, notification *pgconn.Notification) {
 			tx, err := convert(notification)
 			if err != nil {
-				log.Printf("Transaction consumer conversation error: %v", err)
+				slog.Error(err.Error())
 				return
 			}
 			err = handler.Handle(ctx, tx, providerFn)
 			if err != nil {
-				log.Printf("Transaction consumer handle error: %v", err)
+				slog.Error(err.Error())
 				return
 			}
 		},
 		func() context.Context {
 			return ctx
 		},
+		logger,
 	)
 
 	return &consumer{
 		Endpoint: endpoints.NewEndpoint(
 			listener.StartListen,
 			listener.Shutdown,
+			logger,
 		),
 	}
 }
@@ -56,14 +65,14 @@ func convert(notification *pgconn.Notification) (*transactions.Transaction, erro
 	if err != nil {
 		return nil, err
 	}
-	aggregateId, err := uuid.Parse(transactionHandle.AggregateId)
+	aggregateID, err := uuid.Parse(transactionHandle.AggregateID)
 	if err != nil {
 		return nil, err
 	}
-	transactionId, err := uuid.Parse(transactionHandle.Id)
+	transactionID, err := uuid.Parse(transactionHandle.ID)
 	if err != nil {
 		return nil, err
 	}
-	sequenceId, _ := strconv.ParseInt(transactionHandle.SequenceId, 10, 64)
-	return transactions.NewTransaction(transactionId, aggregateId, sequenceId), nil
+	sequenceID, _ := strconv.ParseInt(transactionHandle.SequenceID, 10, 64)
+	return transactions.NewTransaction(transactionID, aggregateID, sequenceID), nil
 }

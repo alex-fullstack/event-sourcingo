@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"log"
+	"log/slog"
 
 	"github.com/alex-fullstack/event-sourcingo/domain/entities"
 	"github.com/alex-fullstack/event-sourcingo/domain/subscriptions"
@@ -22,17 +22,25 @@ type TransactionHandler interface {
 type transactionHandler struct {
 	eventStore   repositories.EventStore
 	eventHandler EventHandler
+	log          *slog.Logger
 }
 
-func NewTransactionHandler(store repositories.EventStore, eventHandler EventHandler) TransactionHandler {
-	return &transactionHandler{eventStore: store, eventHandler: eventHandler}
+func NewTransactionHandler(
+	store repositories.EventStore,
+	eventHandler EventHandler,
+	log *slog.Logger,
+) TransactionHandler {
+	return &transactionHandler{eventStore: store, eventHandler: eventHandler, log: log}
 }
 
-func (eh *transactionHandler) Handle(ctx context.Context, transaction *transactions.Transaction, providerFn func(id uuid.UUID) entities.AggregateProvider) (err error) {
+func (eh *transactionHandler) Handle(
+	ctx context.Context,
+	transaction *transactions.Transaction,
+	providerFn func(id uuid.UUID) entities.AggregateProvider,
+) (err error) {
 	commitExecutor, beginErr := eh.eventStore.Begin(ctx)
 	if beginErr != nil {
-		err = beginErr
-		return
+		return beginErr
 	}
 	defer func() {
 		if err != nil {
@@ -46,19 +54,29 @@ func (eh *transactionHandler) Handle(ctx context.Context, transaction *transacti
 	}()
 	sub, err := eh.eventStore.GetSubscription(ctx, commitExecutor)
 	if err != nil {
-		log.Printf("method GetSubscription: %v", err)
-		return
+		eh.log.ErrorContext(ctx, err.Error())
+		return err
 	}
-	history, newEvents, err := eh.eventStore.GetNewEventsAndHistory(ctx, transaction.AggregateId, sub.LastSequenceID, transaction.SequenceId, commitExecutor)
+	history, newEvents, err := eh.eventStore.GetNewEventsAndHistory(
+		ctx,
+		transaction.AggregateID,
+		sub.LastSequenceID,
+		transaction.SequenceID,
+		commitExecutor,
+	)
 	if err != nil {
-		log.Printf("method GetNewEventsAndHistory: %v", err)
-		return
+		eh.log.ErrorContext(ctx, err.Error())
+		return err
 	}
-	err = eh.eventHandler.HandleEvents(ctx, history, newEvents, providerFn(transaction.AggregateId))
+	err = eh.eventHandler.HandleEvents(ctx, history, newEvents, providerFn(transaction.AggregateID))
 	if err != nil {
-		log.Printf("method HandleEvents: %v", err)
-		return
+		eh.log.ErrorContext(ctx, err.Error())
+		return err
 	}
-	err = eh.eventStore.UpdateSubscription(ctx, &subscriptions.Subscription{LastSequenceID: transaction.SequenceId}, commitExecutor)
-	return
+
+	return eh.eventStore.UpdateSubscription(
+		ctx,
+		&subscriptions.Subscription{LastSequenceID: transaction.SequenceID},
+		commitExecutor,
+	)
 }

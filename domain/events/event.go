@@ -8,8 +8,8 @@ import (
 )
 
 type Event struct {
-	AggregateId   uuid.UUID
-	TransactionId uuid.UUID
+	AggregateID   uuid.UUID
+	TransactionID uuid.UUID
 	CommandType   int
 	Version       int
 	Payload       map[string]interface{}
@@ -18,26 +18,42 @@ type Event struct {
 }
 
 type IntegrationEvent struct {
-	Id      string
-	Type    int
-	Payload map[string]interface{}
+	ID      string                 `json:"id,omitempty"`
+	Type    int                    `json:"type,omitempty"`
+	Payload map[string]interface{} `json:"payload,omitempty"`
 }
 
-func NewEvent(aggregateId, transactionId uuid.UUID, cmdType int, version, evType int, rawPayload interface{}) (Event, error) {
+func NewEvent(
+	aggregateID, transactionID uuid.UUID,
+	cmdType int,
+	version, evType int,
+	rawPayload interface{},
+) (Event, error) {
 	payload, err := payloadFromRaw(rawPayload)
 	if err != nil {
 		return Event{}, err
 	}
-	return Event{TransactionId: transactionId, CommandType: cmdType, AggregateId: aggregateId, Version: version, Type: evType, Payload: payload}, nil
+	return Event{
+		TransactionID: transactionID,
+		CommandType:   cmdType,
+		AggregateID:   aggregateID,
+		Version:       version,
+		Type:          evType,
+		Payload:       payload,
+	}, nil
 }
 
-func NewIntegrationEvent(id uuid.UUID, evType int, rawPayload interface{}) (IntegrationEvent, error) {
+func NewIntegrationEvent(
+	id uuid.UUID,
+	evType int,
+	rawPayload interface{},
+) (IntegrationEvent, error) {
 	payload, err := payloadFromRaw(rawPayload)
 	if err != nil {
 		return IntegrationEvent{}, err
 	}
 
-	return IntegrationEvent{Id: id.String(), Type: evType, Payload: payload}, nil
+	return IntegrationEvent{ID: id.String(), Type: evType, Payload: payload}, nil
 }
 
 func payloadFromRaw(rawPayload interface{}) (map[string]interface{}, error) {

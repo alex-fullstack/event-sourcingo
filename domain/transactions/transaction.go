@@ -3,15 +3,15 @@ package transactions
 import "github.com/google/uuid"
 
 type Transaction struct {
-	Id          uuid.UUID
-	SequenceId  int64
-	AggregateId uuid.UUID
+	ID          uuid.UUID
+	SequenceID  int64
+	AggregateID uuid.UUID
 }
 
-func NewTransaction(id, aggregateId uuid.UUID, sequenceId int64) *Transaction {
+func NewTransaction(id, aggregateID uuid.UUID, sequenceID int64) *Transaction {
 	return &Transaction{
-		Id:          id,
-		SequenceId:  sequenceId,
-		AggregateId: aggregateId,
+		ID:          id,
+		SequenceID:  sequenceID,
+		AggregateID: aggregateID,
 	}
 }

@@ -23,7 +23,10 @@ type commandHandler struct {
 	saver repositories.ProjectionSaver
 }
 
-func NewCommandHandler(store repositories.EventStore, saver repositories.ProjectionSaver) CommandHandler {
+func NewCommandHandler(
+	store repositories.EventStore,
+	saver repositories.ProjectionSaver,
+) CommandHandler {
 	return &commandHandler{store: store, saver: saver}
 }
 
@@ -34,8 +37,7 @@ func (ch *commandHandler) Handle(
 ) (err error) {
 	commitExecutor, beginErr := ch.store.Begin(ctx)
 	if beginErr != nil {
-		err = beginErr
-		return
+		return beginErr
 	}
 	defer func() {
 		if err != nil {
@@ -48,13 +50,18 @@ func (ch *commandHandler) Handle(
 		}
 	}()
 	if err = ch.changeAggregate(ctx, cmd, uuid.New(), aggregate, commitExecutor); err != nil {
-		return
+		return err
 	}
-	err = ch.saver.Save(ctx, aggregate.Projection())
-	return
+	return ch.saver.Save(ctx, aggregate.Projection())
 }
 
-func (ch *commandHandler) changeAggregate(ctx context.Context, cmd commands.Command, transactionId uuid.UUID, aggregate entities.AggregateProvider, commitExecutor interface{}) error {
+func (ch *commandHandler) changeAggregate(
+	ctx context.Context,
+	cmd commands.Command,
+	transactionID uuid.UUID,
+	aggregate entities.AggregateProvider,
+	commitExecutor interface{},
+) error {
 	history, err := ch.store.GetAggregateEvents(ctx, aggregate.ID(), commitExecutor)
 	if err != nil {
 		return err
@@ -64,14 +71,21 @@ func (ch *commandHandler) changeAggregate(ctx context.Context, cmd commands.Comm
 	}
 	newEvents := make([]events.Event, len(cmd.Events))
 	for i, event := range cmd.Events {
-		newEvent, err := events.NewEvent(aggregate.ID(), transactionId, cmd.Type, aggregate.Version()+i+1, event.Type, event.Payload)
-		if err != nil {
-			return err
+		newEvent, errNE := events.NewEvent(
+			aggregate.ID(),
+			transactionID,
+			cmd.Type,
+			aggregate.Version()+i+1,
+			event.Type,
+			event.Payload,
+		)
+		if errNE != nil {
+			return errNE
 		}
 		newEvents[i] = newEvent
 	}
 	if err = aggregate.ApplyChanges(newEvents); err != nil {
 		return err
 	}
-	return ch.store.UpdateOrCreateAggregate(ctx, transactionId, aggregate, commitExecutor)
+	return ch.store.UpdateOrCreateAggregate(ctx, transactionID, aggregate, commitExecutor)
 }

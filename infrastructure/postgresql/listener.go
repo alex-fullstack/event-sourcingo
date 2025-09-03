@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"math/rand"
+	"log/slog"
+	"math/rand/v2"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -22,10 +22,17 @@ type Listener struct {
 	handle      func(context.Context, *pgconn.Notification)
 	baseContext func() context.Context
 	inShutdown  atomic.Bool
+	log         *slog.Logger
 }
 
-func NewListener(ch string, conn *pgxpool.Conn, handle func(context.Context, *pgconn.Notification), baseContext func() context.Context) *Listener {
-	return &Listener{channel: ch, conn: conn, handle: handle, baseContext: baseContext}
+func NewListener(
+	ch string,
+	conn *pgxpool.Conn,
+	handle func(context.Context, *pgconn.Notification),
+	baseContext func() context.Context,
+	log *slog.Logger,
+) *Listener {
+	return &Listener{channel: ch, conn: conn, handle: handle, baseContext: baseContext, log: log}
 }
 
 func (l *Listener) StartListen() error {
@@ -40,24 +47,25 @@ func (l *Listener) StartListen() error {
 		case <-ctx.Done():
 			l.inShutdown.Store(true)
 			return http.ErrServerClosed
-		case <-time.After(10 * time.Millisecond):
-			notification, err := l.conn.Conn().WaitForNotification(ctx)
-			if err != nil {
-				if !errors.Is(err, context.Canceled) {
-					log.Printf("Error waiting for notification: %v", err)
+		case <-time.After(1 * time.Millisecond):
+			notification, errWait := l.conn.Conn().WaitForNotification(ctx)
+			if errWait != nil {
+				if !errors.Is(errWait, context.Canceled) {
+					l.log.ErrorContext(ctx, err.Error())
 				}
 			} else {
 				l.handle(ctx, notification)
 			}
 		}
-
 	}
 }
 
 func (l *Listener) Shutdown(ctx context.Context) error {
 	pollIntervalBase := time.Millisecond
 	nextPollInterval := func() time.Duration {
-		interval := pollIntervalBase + time.Duration(rand.Intn(int(pollIntervalBase/10)))
+		interval := pollIntervalBase + time.Duration(
+			rand.IntN(int(pollIntervalBase)), //nolint:gosec //is correct
+		)
 		pollIntervalBase *= 2
 		if pollIntervalBase > shutdownPollIntervalMax {
 			pollIntervalBase = shutdownPollIntervalMax
@@ -68,12 +76,12 @@ func (l *Listener) Shutdown(ctx context.Context) error {
 	defer timer.Stop()
 	for {
 		if l.inShutdown.Load() {
-			log.Printf("listener shutting down successfully")
+			l.log.InfoContext(ctx, "listener shutting down successfully")
 			return nil
 		}
 		select {
 		case <-ctx.Done():
-			log.Printf("listener shutting down error")
+			l.log.ErrorContext(ctx, ctx.Err().Error())
 			return ctx.Err()
 		case <-timer.C:
 			timer.Reset(nextPollInterval())

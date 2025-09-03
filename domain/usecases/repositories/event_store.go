@@ -17,9 +17,27 @@ type TFACommitter interface {
 
 type EventStore interface {
 	TFACommitter
-	UpdateOrCreateAggregate(ctx context.Context, transactionId uuid.UUID, reader entities.AggregateReader, executor interface{}) (err error)
-	GetAggregateEvents(ctx context.Context, id uuid.UUID, executor interface{}) ([]events.Event, error)
-	GetNewEventsAndHistory(ctx context.Context, id uuid.UUID, firstSequenceId, lastSequenceId int64, executor interface{}) ([]events.Event, []events.Event, error)
+	UpdateOrCreateAggregate(
+		ctx context.Context,
+		transactionID uuid.UUID,
+		reader entities.AggregateReader,
+		executor interface{},
+	) (err error)
+	GetAggregateEvents(
+		ctx context.Context,
+		id uuid.UUID,
+		executor interface{},
+	) ([]events.Event, error)
+	GetNewEventsAndHistory(
+		ctx context.Context,
+		id uuid.UUID,
+		firstSequenceID, lastSequenceID int64,
+		executor interface{},
+	) ([]events.Event, []events.Event, error)
 	GetSubscription(ctx context.Context, executor interface{}) (*subscriptions.Subscription, error)
-	UpdateSubscription(ctx context.Context, sub *subscriptions.Subscription, executor interface{}) error
+	UpdateSubscription(
+		ctx context.Context,
+		sub *subscriptions.Subscription,
+		executor interface{},
+	) error
 }

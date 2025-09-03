@@ -2,7 +2,7 @@ package endpoints
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -13,17 +13,23 @@ type EndpointStarter interface {
 	GracefulStart(ctx context.Context, shutdownTimeout *time.Duration) error
 }
 
-var DefaultShutdownTimeout = 5 * time.Second
+const DefaultShutdownTimeout = 5 * time.Second
 
 type Endpoint struct {
 	start func() error
 	stop  func(ctx context.Context) error
+	log   *slog.Logger
 }
 
-func NewEndpoint(start func() error, stop func(ctx context.Context) error) *Endpoint {
+func NewEndpoint(
+	start func() error,
+	stop func(ctx context.Context) error,
+	log *slog.Logger,
+) *Endpoint {
 	return &Endpoint{
 		start: start,
 		stop:  stop,
+		log:   log,
 	}
 }
 
@@ -39,16 +45,16 @@ func (e *Endpoint) GracefulStart(ctx context.Context, shutdownTimeout *time.Dura
 		defer cancel()
 		if err := e.stop(timer); err != nil {
 			errChan <- errors.WithStack(err)
-			log.Println("Failed to stop gracefully")
+			e.log.ErrorContext(ctx, err.Error())
 			return
 		}
-		log.Println("graceful stopped")
+		e.log.InfoContext(ctx, "graceful stopped")
 		errChan <- nil
 	}()
 
 	if err := e.start(); !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
-	log.Println("graceful stopped !!!")
+	e.log.InfoContext(ctx, "graceful stopped !!!")
 	return <-errChan
 }

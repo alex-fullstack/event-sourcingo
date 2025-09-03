@@ -193,9 +193,9 @@ func (_c *MockEventStore_GetAggregateEvents_Call) RunAndReturn(run func(context.
 	return _c
 }
 
-// GetNewEventsAndHistory provides a mock function with given fields: ctx, id, firstSequenceId, lastSequenceId, executor
-func (_m *MockEventStore) GetNewEventsAndHistory(ctx context.Context, id uuid.UUID, firstSequenceId int64, lastSequenceId int64, executor interface{}) ([]events.Event, []events.Event, error) {
-	ret := _m.Called(ctx, id, firstSequenceId, lastSequenceId, executor)
+// GetNewEventsAndHistory provides a mock function with given fields: ctx, id, firstSequenceID, lastSequenceID, executor
+func (_m *MockEventStore) GetNewEventsAndHistory(ctx context.Context, id uuid.UUID, firstSequenceID int64, lastSequenceID int64, executor interface{}) ([]events.Event, []events.Event, error) {
+	ret := _m.Called(ctx, id, firstSequenceID, lastSequenceID, executor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNewEventsAndHistory")
@@ -205,10 +205,10 @@ func (_m *MockEventStore) GetNewEventsAndHistory(ctx context.Context, id uuid.UU
 	var r1 []events.Event
 	var r2 error
 	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int64, int64, interface{}) ([]events.Event, []events.Event, error)); ok {
-		return rf(ctx, id, firstSequenceId, lastSequenceId, executor)
+		return rf(ctx, id, firstSequenceID, lastSequenceID, executor)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int64, int64, interface{}) []events.Event); ok {
-		r0 = rf(ctx, id, firstSequenceId, lastSequenceId, executor)
+		r0 = rf(ctx, id, firstSequenceID, lastSequenceID, executor)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]events.Event)
@@ -216,7 +216,7 @@ func (_m *MockEventStore) GetNewEventsAndHistory(ctx context.Context, id uuid.UU
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, int64, int64, interface{}) []events.Event); ok {
-		r1 = rf(ctx, id, firstSequenceId, lastSequenceId, executor)
+		r1 = rf(ctx, id, firstSequenceID, lastSequenceID, executor)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).([]events.Event)
@@ -224,7 +224,7 @@ func (_m *MockEventStore) GetNewEventsAndHistory(ctx context.Context, id uuid.UU
 	}
 
 	if rf, ok := ret.Get(2).(func(context.Context, uuid.UUID, int64, int64, interface{}) error); ok {
-		r2 = rf(ctx, id, firstSequenceId, lastSequenceId, executor)
+		r2 = rf(ctx, id, firstSequenceID, lastSequenceID, executor)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -240,14 +240,14 @@ type MockEventStore_GetNewEventsAndHistory_Call struct {
 // GetNewEventsAndHistory is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-//   - firstSequenceId int64
-//   - lastSequenceId int64
+//   - firstSequenceID int64
+//   - lastSequenceID int64
 //   - executor interface{}
-func (_e *MockEventStore_Expecter) GetNewEventsAndHistory(ctx interface{}, id interface{}, firstSequenceId interface{}, lastSequenceId interface{}, executor interface{}) *MockEventStore_GetNewEventsAndHistory_Call {
-	return &MockEventStore_GetNewEventsAndHistory_Call{Call: _e.mock.On("GetNewEventsAndHistory", ctx, id, firstSequenceId, lastSequenceId, executor)}
+func (_e *MockEventStore_Expecter) GetNewEventsAndHistory(ctx interface{}, id interface{}, firstSequenceID interface{}, lastSequenceID interface{}, executor interface{}) *MockEventStore_GetNewEventsAndHistory_Call {
+	return &MockEventStore_GetNewEventsAndHistory_Call{Call: _e.mock.On("GetNewEventsAndHistory", ctx, id, firstSequenceID, lastSequenceID, executor)}
 }
 
-func (_c *MockEventStore_GetNewEventsAndHistory_Call) Run(run func(ctx context.Context, id uuid.UUID, firstSequenceId int64, lastSequenceId int64, executor interface{})) *MockEventStore_GetNewEventsAndHistory_Call {
+func (_c *MockEventStore_GetNewEventsAndHistory_Call) Run(run func(ctx context.Context, id uuid.UUID, firstSequenceID int64, lastSequenceID int64, executor interface{})) *MockEventStore_GetNewEventsAndHistory_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(int64), args[3].(int64), args[4].(interface{}))
 	})
@@ -370,9 +370,9 @@ func (_c *MockEventStore_Rollback_Call) RunAndReturn(run func(context.Context, i
 	return _c
 }
 
-// UpdateOrCreateAggregate provides a mock function with given fields: ctx, transactionId, reader, executor
-func (_m *MockEventStore) UpdateOrCreateAggregate(ctx context.Context, transactionId uuid.UUID, reader entities.AggregateReader, executor interface{}) error {
-	ret := _m.Called(ctx, transactionId, reader, executor)
+// UpdateOrCreateAggregate provides a mock function with given fields: ctx, transactionID, reader, executor
+func (_m *MockEventStore) UpdateOrCreateAggregate(ctx context.Context, transactionID uuid.UUID, reader entities.AggregateReader, executor interface{}) error {
+	ret := _m.Called(ctx, transactionID, reader, executor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateOrCreateAggregate")
@@ -380,7 +380,7 @@ func (_m *MockEventStore) UpdateOrCreateAggregate(ctx context.Context, transacti
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entities.AggregateReader, interface{}) error); ok {
-		r0 = rf(ctx, transactionId, reader, executor)
+		r0 = rf(ctx, transactionID, reader, executor)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -395,14 +395,14 @@ type MockEventStore_UpdateOrCreateAggregate_Call struct {
 
 // UpdateOrCreateAggregate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - transactionId uuid.UUID
+//   - transactionID uuid.UUID
 //   - reader entities.AggregateReader
 //   - executor interface{}
-func (_e *MockEventStore_Expecter) UpdateOrCreateAggregate(ctx interface{}, transactionId interface{}, reader interface{}, executor interface{}) *MockEventStore_UpdateOrCreateAggregate_Call {
-	return &MockEventStore_UpdateOrCreateAggregate_Call{Call: _e.mock.On("UpdateOrCreateAggregate", ctx, transactionId, reader, executor)}
+func (_e *MockEventStore_Expecter) UpdateOrCreateAggregate(ctx interface{}, transactionID interface{}, reader interface{}, executor interface{}) *MockEventStore_UpdateOrCreateAggregate_Call {
+	return &MockEventStore_UpdateOrCreateAggregate_Call{Call: _e.mock.On("UpdateOrCreateAggregate", ctx, transactionID, reader, executor)}
 }
 
-func (_c *MockEventStore_UpdateOrCreateAggregate_Call) Run(run func(ctx context.Context, transactionId uuid.UUID, reader entities.AggregateReader, executor interface{})) *MockEventStore_UpdateOrCreateAggregate_Call {
+func (_c *MockEventStore_UpdateOrCreateAggregate_Call) Run(run func(ctx context.Context, transactionID uuid.UUID, reader entities.AggregateReader, executor interface{})) *MockEventStore_UpdateOrCreateAggregate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(entities.AggregateReader), args[3].(interface{}))
 	})

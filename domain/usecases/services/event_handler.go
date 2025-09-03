@@ -9,7 +9,11 @@ import (
 )
 
 type EventHandler interface {
-	HandleEvents(ctx context.Context, history, newEvents []events.Event, provider entities.AggregateProvider) error
+	HandleEvents(
+		ctx context.Context,
+		history, newEvents []events.Event,
+		provider entities.AggregateProvider,
+	) error
 }
 
 type eventHandler struct {
@@ -20,20 +24,24 @@ func NewEventHandler(publisher repositories.Publisher) EventHandler {
 	return &eventHandler{publisher: publisher}
 }
 
-func (eh *eventHandler) HandleEvents(ctx context.Context, history, newEvents []events.Event, aggregate entities.AggregateProvider) error {
+func (eh *eventHandler) HandleEvents(
+	ctx context.Context,
+	history, newEvents []events.Event,
+	aggregate entities.AggregateProvider,
+) error {
 	err := aggregate.Build(history)
 	if err != nil {
 		return err
 	}
 	integrationEvents := make([]events.IntegrationEvent, 0)
 	for _, event := range newEvents {
-		err := aggregate.ApplyChanges([]events.Event{event})
+		err = aggregate.ApplyChanges([]events.Event{event})
 		if err != nil {
 			return err
 		}
-		integrationEvent, err := aggregate.IntegrationEvent(event.Type)
-		if err != nil {
-			return err
+		integrationEvent, errIE := aggregate.IntegrationEvent(event.Type)
+		if errIE != nil {
+			return errIE
 		}
 		integrationEvents = append(integrationEvents, integrationEvent)
 	}

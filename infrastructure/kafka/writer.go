@@ -26,8 +26,8 @@ func NewWriter(cfg *Config) *Writer {
 func (w *Writer) Publish(ctx context.Context, events []events.IntegrationEvent) error {
 	messages := slices.Collect(func(yield func(kafka.Message) bool) {
 		for _, event := range events {
-			parsedId, _ := uuid.Parse(event.Id)
-			key, _ := parsedId.MarshalBinary()
+			parsedID, _ := uuid.Parse(event.ID)
+			key, _ := parsedID.MarshalBinary()
 			value, _ := json.Marshal(event)
 			message := kafka.Message{
 				Key:   key,
