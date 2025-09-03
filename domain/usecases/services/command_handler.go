@@ -2,11 +2,12 @@ package services
 
 import (
 	"context"
+
+	"github.com/alex-fullstack/event-sourcingo/domain/commands"
+	"github.com/alex-fullstack/event-sourcingo/domain/entities"
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/repositories"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/commands"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/repositories"
 )
 
 type CommandHandler interface {

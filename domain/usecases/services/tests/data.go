@@ -2,14 +2,15 @@ package tests
 
 import (
 	"errors"
+
+	"github.com/alex-fullstack/event-sourcingo/domain/commands"
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
+	"github.com/alex-fullstack/event-sourcingo/domain/subscriptions"
+	"github.com/alex-fullstack/event-sourcingo/domain/transactions"
+	"github.com/alex-fullstack/event-sourcingo/mocks/entities"
+	"github.com/alex-fullstack/event-sourcingo/mocks/repositories"
+	"github.com/alex-fullstack/event-sourcingo/mocks/services"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/commands"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/subscriptions"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/transactions"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/mocks/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/mocks/repositories"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/mocks/services"
 )
 
 var (

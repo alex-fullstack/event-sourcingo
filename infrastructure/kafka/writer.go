@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"slices"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
 )
 
 type Writer struct {

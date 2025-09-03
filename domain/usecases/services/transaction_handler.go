@@ -2,13 +2,13 @@ package services
 
 import (
 	"context"
-	"fmt"
-	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/subscriptions"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/transactions"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/repositories"
 	"log"
+
+	"github.com/alex-fullstack/event-sourcingo/domain/entities"
+	"github.com/alex-fullstack/event-sourcingo/domain/subscriptions"
+	"github.com/alex-fullstack/event-sourcingo/domain/transactions"
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/repositories"
+	"github.com/google/uuid"
 )
 
 type TransactionHandler interface {
@@ -46,17 +46,17 @@ func (eh *transactionHandler) Handle(ctx context.Context, transaction *transacti
 	}()
 	sub, err := eh.eventStore.GetSubscription(ctx, commitExecutor)
 	if err != nil {
-		log.Println(fmt.Sprintf("method GetSubscription: %v", err))
+		log.Printf("method GetSubscription: %v", err)
 		return
 	}
 	history, newEvents, err := eh.eventStore.GetNewEventsAndHistory(ctx, transaction.AggregateId, sub.LastSequenceID, transaction.SequenceId, commitExecutor)
 	if err != nil {
-		log.Println(fmt.Sprintf("method GetNewEventsAndHistory: %v", err))
+		log.Printf("method GetNewEventsAndHistory: %v", err)
 		return
 	}
 	err = eh.eventHandler.HandleEvents(ctx, history, newEvents, providerFn(transaction.AggregateId))
 	if err != nil {
-		log.Println(fmt.Sprintf("method HandleEvents: %v", err))
+		log.Printf("method HandleEvents: %v", err)
 		return
 	}
 	err = eh.eventStore.UpdateSubscription(ctx, &subscriptions.Subscription{LastSequenceID: transaction.SequenceId}, commitExecutor)

@@ -5,10 +5,10 @@ package services
 import (
 	context "context"
 
+	entities "github.com/alex-fullstack/event-sourcingo/domain/entities"
 	mock "github.com/stretchr/testify/mock"
-	entities "gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
 
-	transactions "gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/transactions"
+	transactions "github.com/alex-fullstack/event-sourcingo/domain/transactions"
 
 	uuid "github.com/google/uuid"
 )

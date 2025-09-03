@@ -2,10 +2,11 @@ package repositories
 
 import (
 	"context"
+
+	"github.com/alex-fullstack/event-sourcingo/domain/entities"
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
+	"github.com/alex-fullstack/event-sourcingo/domain/subscriptions"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/subscriptions"
 )
 
 type TFACommitter interface {

@@ -2,10 +2,11 @@ package endpoints
 
 import (
 	"context"
-	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type EndpointStarter interface {

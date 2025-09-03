@@ -2,12 +2,13 @@ package tests
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/mocks/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/mocks/repositories"
 	"testing"
+
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/services"
+	"github.com/alex-fullstack/event-sourcingo/mocks/entities"
+	"github.com/alex-fullstack/event-sourcingo/mocks/repositories"
+	"github.com/stretchr/testify/assert"
 )
 
 type EventHandlerTestCase struct {
@@ -54,7 +55,7 @@ func TestEventHandler_HandleMethod(t *testing.T) {
 				aggregateProviderMock.EXPECT().Build(tc.history).Return(nil)
 				aggregateProviderMock.EXPECT().ApplyChanges([]events.Event{tc.newEvents[0]}).Return(nil)
 				aggregateProviderMock.EXPECT().ApplyChanges([]events.Event{tc.newEvents[1]}).Return(nil)
-				aggregateProviderMock.EXPECT().IntegrationEvent(0).Return(events.IntegrationEvent{}, false, expectedError)
+				aggregateProviderMock.EXPECT().IntegrationEvent(0).Return(events.IntegrationEvent{}, expectedError)
 			},
 			dataAssertion: func(actual error) {
 				assert.Equal(t, expectedError, actual)
@@ -68,8 +69,8 @@ func TestEventHandler_HandleMethod(t *testing.T) {
 			mockAssertion: func(tc EventHandlerTestCase) {
 				aggregateProviderMock.EXPECT().Build(tc.history).Return(nil)
 				aggregateProviderMock.EXPECT().ApplyChanges([]events.Event{tc.newEvents[0]}).Return(nil)
-				aggregateProviderMock.EXPECT().IntegrationEvent(0).Return(expectedIntegrationEvent, true, nil)
-				aggregateProviderMock.EXPECT().IntegrationEvent(0).Return(expectedIntegrationEvent, true, nil)
+				aggregateProviderMock.EXPECT().IntegrationEvent(0).Return(expectedIntegrationEvent, nil)
+				aggregateProviderMock.EXPECT().IntegrationEvent(0).Return(expectedIntegrationEvent, nil)
 				aggregateProviderMock.EXPECT().ApplyChanges([]events.Event{tc.newEvents[1]}).Return(nil)
 				publisherMock.EXPECT().Publish(tc.ctx, []events.IntegrationEvent{expectedIntegrationEvent, expectedIntegrationEvent}).Return(expectedError)
 			},
@@ -85,8 +86,8 @@ func TestEventHandler_HandleMethod(t *testing.T) {
 			mockAssertion: func(tc EventHandlerTestCase) {
 				aggregateProviderMock.EXPECT().Build(tc.history).Return(nil)
 				aggregateProviderMock.EXPECT().ApplyChanges([]events.Event{tc.newEvents[0]}).Return(nil)
-				aggregateProviderMock.EXPECT().IntegrationEvent(0).Return(expectedIntegrationEvent, true, nil)
-				aggregateProviderMock.EXPECT().IntegrationEvent(0).Return(expectedIntegrationEvent, true, nil)
+				aggregateProviderMock.EXPECT().IntegrationEvent(0).Return(expectedIntegrationEvent, nil)
+				aggregateProviderMock.EXPECT().IntegrationEvent(0).Return(expectedIntegrationEvent, nil)
 				aggregateProviderMock.EXPECT().ApplyChanges([]events.Event{tc.newEvents[1]}).Return(nil)
 				publisherMock.EXPECT().Publish(tc.ctx, []events.IntegrationEvent{expectedIntegrationEvent, expectedIntegrationEvent}).Return(nil)
 			},

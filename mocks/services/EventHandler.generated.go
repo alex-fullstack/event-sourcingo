@@ -5,8 +5,8 @@ package services
 import (
 	context "context"
 
-	entities "gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	events "gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
+	entities "github.com/alex-fullstack/event-sourcingo/domain/entities"
+	events "github.com/alex-fullstack/event-sourcingo/domain/events"
 
 	mock "github.com/stretchr/testify/mock"
 )

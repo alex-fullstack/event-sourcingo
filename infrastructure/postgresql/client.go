@@ -2,14 +2,15 @@ package postgresql
 
 import (
 	"context"
+	"strconv"
+	"time"
+
+	"github.com/alex-fullstack/event-sourcingo/domain/entities"
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
+	"github.com/alex-fullstack/event-sourcingo/domain/subscriptions"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/subscriptions"
-	"strconv"
-	"time"
 )
 
 type Transaction pgx.Tx
@@ -211,7 +212,7 @@ func (db *PostgresDB) insertEvents(ctx context.Context, events []events.Event, t
 		}
 	}()
 
-	for _ = range events {
+	for range events {
 		_, err = results.Exec()
 		if err != nil {
 			return

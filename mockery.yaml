@@ -2,12 +2,12 @@ with-expecter: True
 filename: "./{{.PackageName}}/{{.InterfaceName}}.generated.go"
 outpkg: "{{.PackageName}}"
 packages:
-  gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities:
+  github.com/alex-fullstack/event-sourcingo/domain/entities:
     interfaces:
       AggregateProvider:
         config:
           dir: ./mocks
-  gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/repositories:
+  github.com/alex-fullstack/event-sourcingo/domain/usecases/repositories:
     interfaces:
       EventStore:
         config:
@@ -18,7 +18,7 @@ packages:
       Publisher:
         config:
           dir: ./mocks
-  gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services:
+  github.com/alex-fullstack/event-sourcingo/domain/usecases/services:
     interfaces:
       TransactionHandler:
         config:

@@ -3,8 +3,8 @@ package entities
 import (
 	"errors"
 
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
 	"github.com/google/uuid"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
 )
 
 type AggregateReader interface {

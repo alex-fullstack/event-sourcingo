@@ -3,17 +3,18 @@ package consumers
 import (
 	"context"
 	"encoding/json"
+	"log"
+	"strconv"
+
+	"github.com/alex-fullstack/event-sourcingo/domain/dto"
+	"github.com/alex-fullstack/event-sourcingo/domain/entities"
+	"github.com/alex-fullstack/event-sourcingo/domain/transactions"
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/services"
+	"github.com/alex-fullstack/event-sourcingo/endpoints"
+	"github.com/alex-fullstack/event-sourcingo/infrastructure/postgresql"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/dto"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/transactions"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/endpoints"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/infrastructure/postgresql"
-	"log"
-	"strconv"
 )
 
 type consumer struct {
@@ -63,6 +64,6 @@ func convert(notification *pgconn.Notification) (*transactions.Transaction, erro
 	if err != nil {
 		return nil, err
 	}
-	sequenceId, err := strconv.ParseInt(transactionHandle.SequenceId, 10, 64)
+	sequenceId, _ := strconv.ParseInt(transactionHandle.SequenceId, 10, 64)
 	return transactions.NewTransaction(transactionId, aggregateId, sequenceId), nil
 }

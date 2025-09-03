@@ -2,16 +2,17 @@ package tests
 
 import (
 	"context"
+	"testing"
+
+	"github.com/alex-fullstack/event-sourcingo/domain/entities"
+	"github.com/alex-fullstack/event-sourcingo/domain/subscriptions"
+	"github.com/alex-fullstack/event-sourcingo/domain/transactions"
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/services"
+	mockEntities "github.com/alex-fullstack/event-sourcingo/mocks/entities"
+	"github.com/alex-fullstack/event-sourcingo/mocks/repositories"
+	mockServices "github.com/alex-fullstack/event-sourcingo/mocks/services"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/subscriptions"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/transactions"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services"
-	mockEntities "gitverse.ru/aleksandr-bebyakov/event-sourcingo/mocks/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/mocks/repositories"
-	mockServices "gitverse.ru/aleksandr-bebyakov/event-sourcingo/mocks/services"
-	"testing"
 )
 
 type TransactionHandlerTestCase struct {

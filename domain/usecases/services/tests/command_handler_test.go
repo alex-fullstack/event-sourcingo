@@ -2,13 +2,14 @@ package tests
 
 import (
 	"context"
+	"testing"
+
+	"github.com/alex-fullstack/event-sourcingo/domain/commands"
+	"github.com/alex-fullstack/event-sourcingo/domain/usecases/services"
+	"github.com/alex-fullstack/event-sourcingo/mocks/entities"
+	"github.com/alex-fullstack/event-sourcingo/mocks/repositories"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/commands"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/usecases/services"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/mocks/entities"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/mocks/repositories"
-	"testing"
 )
 
 type CommandHandlerTestCase struct {

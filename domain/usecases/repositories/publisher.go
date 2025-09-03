@@ -2,7 +2,8 @@ package repositories
 
 import (
 	"context"
-	"gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
+
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
 )
 
 type Publisher interface {

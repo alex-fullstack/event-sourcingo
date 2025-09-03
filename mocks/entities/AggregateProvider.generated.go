@@ -3,8 +3,8 @@
 package entities
 
 import (
+	events "github.com/alex-fullstack/event-sourcingo/domain/events"
 	mock "github.com/stretchr/testify/mock"
-	events "gitverse.ru/aleksandr-bebyakov/event-sourcingo/domain/events"
 
 	uuid "github.com/google/uuid"
 )
@@ -254,7 +254,7 @@ func (_c *MockAggregateProvider_ID_Call) RunAndReturn(run func() uuid.UUID) *Moc
 }
 
 // IntegrationEvent provides a mock function with given fields: evType
-func (_m *MockAggregateProvider) IntegrationEvent(evType int) (events.IntegrationEvent, bool, error) {
+func (_m *MockAggregateProvider) IntegrationEvent(evType int) (events.IntegrationEvent, error) {
 	ret := _m.Called(evType)
 
 	if len(ret) == 0 {
@@ -262,9 +262,8 @@ func (_m *MockAggregateProvider) IntegrationEvent(evType int) (events.Integratio
 	}
 
 	var r0 events.IntegrationEvent
-	var r1 bool
-	var r2 error
-	if rf, ok := ret.Get(0).(func(int) (events.IntegrationEvent, bool, error)); ok {
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int) (events.IntegrationEvent, error)); ok {
 		return rf(evType)
 	}
 	if rf, ok := ret.Get(0).(func(int) events.IntegrationEvent); ok {
@@ -273,19 +272,13 @@ func (_m *MockAggregateProvider) IntegrationEvent(evType int) (events.Integratio
 		r0 = ret.Get(0).(events.IntegrationEvent)
 	}
 
-	if rf, ok := ret.Get(1).(func(int) bool); ok {
+	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(evType)
 	} else {
-		r1 = ret.Get(1).(bool)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(int) error); ok {
-		r2 = rf(evType)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockAggregateProvider_IntegrationEvent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IntegrationEvent'
@@ -306,12 +299,12 @@ func (_c *MockAggregateProvider_IntegrationEvent_Call) Run(run func(evType int))
 	return _c
 }
 
-func (_c *MockAggregateProvider_IntegrationEvent_Call) Return(_a0 events.IntegrationEvent, _a1 bool, _a2 error) *MockAggregateProvider_IntegrationEvent_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MockAggregateProvider_IntegrationEvent_Call) Return(_a0 events.IntegrationEvent, _a1 error) *MockAggregateProvider_IntegrationEvent_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockAggregateProvider_IntegrationEvent_Call) RunAndReturn(run func(int) (events.IntegrationEvent, bool, error)) *MockAggregateProvider_IntegrationEvent_Call {
+func (_c *MockAggregateProvider_IntegrationEvent_Call) RunAndReturn(run func(int) (events.IntegrationEvent, error)) *MockAggregateProvider_IntegrationEvent_Call {
 	_c.Call.Return(run)
 	return _c
 }
