@@ -6,6 +6,6 @@ import (
 	"github.com/alex-fullstack/event-sourcingo/domain/events"
 )
 
-type Publisher interface {
-	Publish(context.Context, []events.IntegrationEvent) error
+type Publisher[T any] interface {
+	Publish(context.Context, []events.IntegrationEvent[T]) error
 }

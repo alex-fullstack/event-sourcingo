@@ -8,42 +8,34 @@ import (
 	"github.com/alex-fullstack/event-sourcingo/domain/usecases/repositories"
 )
 
-type EventHandler interface {
+type EventHandler[T, S, P, K any] interface {
 	HandleEvents(
 		ctx context.Context,
-		history, newEvents []events.Event,
-		provider entities.AggregateProvider,
+		provider entities.AggregateProvider[T, S, P, K],
+		events []events.Event[T],
 	) error
 }
 
-type eventHandler struct {
-	publisher repositories.Publisher
+type eventHandler[T, S, P, K any] struct {
+	publisher repositories.Publisher[K]
 }
 
-func NewEventHandler(publisher repositories.Publisher) EventHandler {
-	return &eventHandler{publisher: publisher}
+func NewEventHandler[T, S, P, K any](publisher repositories.Publisher[K]) EventHandler[T, S, P, K] {
+	return &eventHandler[T, S, P, K]{publisher: publisher}
 }
 
-func (eh *eventHandler) HandleEvents(
+func (eh *eventHandler[T, S, P, K]) HandleEvents(
 	ctx context.Context,
-	history, newEvents []events.Event,
-	aggregate entities.AggregateProvider,
+	provider entities.AggregateProvider[T, S, P, K],
+	newEvents []events.Event[T],
 ) error {
-	err := aggregate.Build(history)
-	if err != nil {
-		return err
-	}
-	integrationEvents := make([]events.IntegrationEvent, 0)
+	integrationEvents := make([]events.IntegrationEvent[K], 0)
 	for _, event := range newEvents {
-		err = aggregate.ApplyChanges([]events.Event{event})
+		err := provider.ApplyChange(event)
 		if err != nil {
 			return err
 		}
-		integrationEvent, errIE := aggregate.IntegrationEvent(event.Type)
-		if errIE != nil {
-			return errIE
-		}
-		integrationEvents = append(integrationEvents, integrationEvent)
+		integrationEvents = append(integrationEvents, provider.IntegrationEvent(event.Type))
 	}
 	return eh.publisher.Publish(ctx, integrationEvents)
 }

@@ -12,7 +12,7 @@ packages:
       EventStore:
         config:
           dir: ./mocks
-      ProjectionSaver:
+      ProjectionStore:
         config:
           dir: ./mocks
       Publisher:

@@ -1,69 +1,51 @@
 package events
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-type Event struct {
+type Event[T any] struct {
 	AggregateID   uuid.UUID
 	TransactionID uuid.UUID
 	CommandType   int
 	Version       int
-	Payload       map[string]interface{}
+	Payload       T
 	Type          int
 	CreatedAt     *time.Time
 }
 
-type IntegrationEvent struct {
-	ID      string                 `json:"id,omitempty"`
-	Type    int                    `json:"type,omitempty"`
-	Payload map[string]interface{} `json:"payload,omitempty"`
+type IntegrationEvent[T any] struct {
+	ID      string `json:"id"`
+	Type    int    `json:"type"`
+	Payload T      `json:"payload"`
 }
 
-func NewEvent(
+func NewEvent[T any](
 	aggregateID, transactionID uuid.UUID,
 	cmdType int,
 	version, evType int,
-	rawPayload interface{},
-) (Event, error) {
-	payload, err := payloadFromRaw(rawPayload)
-	if err != nil {
-		return Event{}, err
-	}
-	return Event{
+	payload T,
+) Event[T] {
+	return Event[T]{
 		TransactionID: transactionID,
 		CommandType:   cmdType,
 		AggregateID:   aggregateID,
 		Version:       version,
 		Type:          evType,
 		Payload:       payload,
-	}, nil
+	}
 }
 
-func NewIntegrationEvent(
+func NewIntegrationEvent[T any](
 	id uuid.UUID,
 	evType int,
-	rawPayload interface{},
-) (IntegrationEvent, error) {
-	payload, err := payloadFromRaw(rawPayload)
-	if err != nil {
-		return IntegrationEvent{}, err
+	payload T,
+) IntegrationEvent[T] {
+	return IntegrationEvent[T]{
+		ID:      id.String(),
+		Type:    evType,
+		Payload: payload,
 	}
-
-	return IntegrationEvent{ID: id.String(), Type: evType, Payload: payload}, nil
-}
-
-func payloadFromRaw(rawPayload interface{}) (map[string]interface{}, error) {
-	var jsonData []byte
-	jsonData, err := json.Marshal(rawPayload)
-	if err != nil {
-		return nil, err
-	}
-
-	var payload map[string]interface{}
-	err = json.Unmarshal(jsonData, &payload)
-	return payload, err
 }

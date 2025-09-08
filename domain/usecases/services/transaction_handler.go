@@ -11,32 +11,36 @@ import (
 	"github.com/google/uuid"
 )
 
-type TransactionHandler interface {
+type TransactionHandler[T, S, P, K, E any] interface {
 	Handle(
 		ctx context.Context,
 		transaction *transactions.Transaction,
-		providerFn func(id uuid.UUID) entities.AggregateProvider,
+		providerFn func(id uuid.UUID) entities.AggregateProvider[T, S, P, K],
 	) error
 }
 
-type transactionHandler struct {
-	eventStore   repositories.EventStore
-	eventHandler EventHandler
+type transactionHandler[T, S, P, K, E any] struct {
+	eventStore   repositories.EventStore[T, S, E]
+	eventHandler EventHandler[T, S, P, K]
 	log          *slog.Logger
 }
 
-func NewTransactionHandler(
-	store repositories.EventStore,
-	eventHandler EventHandler,
+func NewTransactionHandler[T, S, P, K, E any](
+	store repositories.EventStore[T, S, E],
+	eventHandler EventHandler[T, S, P, K],
 	log *slog.Logger,
-) TransactionHandler {
-	return &transactionHandler{eventStore: store, eventHandler: eventHandler, log: log}
+) TransactionHandler[T, S, P, K, E] {
+	return &transactionHandler[T, S, P, K, E]{
+		eventStore:   store,
+		eventHandler: eventHandler,
+		log:          log,
+	}
 }
 
-func (eh *transactionHandler) Handle(
+func (eh *transactionHandler[T, S, P, K, E]) Handle(
 	ctx context.Context,
 	transaction *transactions.Transaction,
-	providerFn func(id uuid.UUID) entities.AggregateProvider,
+	providerFn func(id uuid.UUID) entities.AggregateProvider[T, S, P, K],
 ) (err error) {
 	commitExecutor, beginErr := eh.eventStore.Begin(ctx)
 	if beginErr != nil {
@@ -68,7 +72,13 @@ func (eh *transactionHandler) Handle(
 		eh.log.ErrorContext(ctx, err.Error())
 		return err
 	}
-	err = eh.eventHandler.HandleEvents(ctx, history, newEvents, providerFn(transaction.AggregateID))
+	provider := providerFn(transaction.AggregateID)
+	err = provider.Build(history)
+	if err != nil {
+		eh.log.ErrorContext(ctx, err.Error())
+		return err
+	}
+	err = eh.eventHandler.HandleEvents(ctx, provider, newEvents)
 	if err != nil {
 		eh.log.ErrorContext(ctx, err.Error())
 		return err

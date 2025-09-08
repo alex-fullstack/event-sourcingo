@@ -1,19 +1,19 @@
 package commands
 
-type CommandEvent struct {
+type CommandEvent[T any] struct {
 	Type    int
-	Payload interface{}
+	Payload T
 }
 
-type Command struct {
+type Command[T any] struct {
 	Type   int
-	Events []CommandEvent
+	Events []CommandEvent[T]
 }
 
-func NewCommandEvent(eType int, payload interface{}) CommandEvent {
-	return CommandEvent{Type: eType, Payload: payload}
+func NewCommandEvent[T any](eType int, payload T) CommandEvent[T] {
+	return CommandEvent[T]{Type: eType, Payload: payload}
 }
 
-func NewCommand(cType int, events []CommandEvent) Command {
-	return Command{Events: events, Type: cType}
+func NewCommand[T any](cType int, events []CommandEvent[T]) Command[T] {
+	return Command[T]{Events: events, Type: cType}
 }

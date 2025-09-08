@@ -28,13 +28,15 @@ type TransactionHandlerTestCase struct {
 
 func TestTransactionHandler_HandleMethod(t *testing.T) {
 	var (
-		eventStoreMock        *repositories.MockEventStore
-		aggregateProviderMock *mockEntities.MockAggregateProvider
-		eventHandlerMock      *mockServices.MockEventHandler
-		errExpected           = errors.New("test error")
-		expectedExecutor      = &struct{}{}
-		expectedID            = uuid.New()
-		expectedEvents        = []events.Event{
+		eventStoreMock        *repositories.MockEventStore[*struct{}, *struct{}, *struct{}]
+		aggregateProviderMock *mockEntities.MockAggregateProvider[*struct{}, *struct{}, *struct{}, *struct{}]
+		eventHandlerMock      *mockServices.MockEventHandler[*struct{}, *struct{}, *struct{}, *struct{}]
+		errExpected           = errors.New(
+			"test error",
+		)
+		expectedExecutor = &struct{}{}
+		expectedID       = uuid.New()
+		expectedEvents   = []events.Event[*struct{}]{
 			{AggregateID: expectedID},
 			{AggregateID: expectedID},
 		}
@@ -82,7 +84,13 @@ func TestTransactionHandler_HandleMethod(t *testing.T) {
 					GetSubscription(tc.ctx, expectedExecutor).
 					Return(expectedSubscription, nil)
 				eventStoreMock.EXPECT().
-					GetNewEventsAndHistory(tc.ctx, expectedID, expectedLastSequenceID, tc.transaction.SequenceID, expectedExecutor).
+					GetNewEventsAndHistory(
+						tc.ctx,
+						expectedID,
+						expectedLastSequenceID,
+						tc.transaction.SequenceID,
+						expectedExecutor,
+					).
 					Return(nil, nil, errExpected)
 				eventStoreMock.EXPECT().Rollback(tc.ctx, expectedExecutor).Return(nil)
 			},
@@ -100,10 +108,17 @@ func TestTransactionHandler_HandleMethod(t *testing.T) {
 					GetSubscription(tc.ctx, expectedExecutor).
 					Return(expectedSubscription, nil)
 				eventStoreMock.EXPECT().
-					GetNewEventsAndHistory(tc.ctx, expectedID, expectedLastSequenceID, tc.transaction.SequenceID, expectedExecutor).
+					GetNewEventsAndHistory(
+						tc.ctx,
+						expectedID,
+						expectedLastSequenceID,
+						tc.transaction.SequenceID,
+						expectedExecutor,
+					).
 					Return(expectedEvents, expectedEvents, nil)
+				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
 				eventHandlerMock.EXPECT().
-					HandleEvents(tc.ctx, expectedEvents, expectedEvents, aggregateProviderMock).
+					HandleEvents(tc.ctx, aggregateProviderMock, expectedEvents).
 					Return(errExpected)
 				eventStoreMock.EXPECT().Rollback(tc.ctx, expectedExecutor).Return(nil)
 			},
@@ -121,10 +136,16 @@ func TestTransactionHandler_HandleMethod(t *testing.T) {
 					GetSubscription(tc.ctx, expectedExecutor).
 					Return(expectedSubscription, nil)
 				eventStoreMock.EXPECT().
-					GetNewEventsAndHistory(tc.ctx, expectedID, expectedLastSequenceID, tc.transaction.SequenceID, expectedExecutor).
+					GetNewEventsAndHistory(
+						tc.ctx, expectedID,
+						expectedLastSequenceID,
+						tc.transaction.SequenceID,
+						expectedExecutor,
+					).
 					Return(expectedEvents, expectedEvents, nil)
+				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
 				eventHandlerMock.EXPECT().
-					HandleEvents(tc.ctx, expectedEvents, expectedEvents, aggregateProviderMock).
+					HandleEvents(tc.ctx, aggregateProviderMock, expectedEvents).
 					Return(nil)
 				eventStoreMock.EXPECT().
 					UpdateSubscription(
@@ -157,8 +178,9 @@ func TestTransactionHandler_HandleMethod(t *testing.T) {
 						expectedExecutor,
 					).
 					Return(expectedEvents, expectedEvents, nil)
+				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
 				eventHandlerMock.EXPECT().
-					HandleEvents(tc.ctx, expectedEvents, expectedEvents, aggregateProviderMock).
+					HandleEvents(tc.ctx, aggregateProviderMock, expectedEvents).
 					Return(nil)
 				eventStoreMock.EXPECT().
 					UpdateSubscription(
@@ -179,12 +201,18 @@ func TestTransactionHandler_HandleMethod(t *testing.T) {
 		t.Run(
 			tc.description,
 			func(t *testing.T) {
-				aggregateProviderMock = mockEntities.NewMockAggregateProvider(t)
-				eventStoreMock = repositories.NewMockEventStore(t)
-				eventHandlerMock = mockServices.NewMockEventHandler(t)
+				aggregateProviderMock = mockEntities.NewMockAggregateProvider[*struct{}, *struct{}, *struct{}, *struct{}]( //nolint:lll
+					t,
+				)
+				eventStoreMock = repositories.NewMockEventStore[*struct{}, *struct{}, *struct{}](
+					t,
+				)
+				eventHandlerMock = mockServices.NewMockEventHandler[*struct{}, *struct{}, *struct{}, *struct{}](
+					t,
+				)
 				tc.mockAssertion(tc)
 
-				handler := services.NewTransactionHandler(
+				handler := services.NewTransactionHandler[*struct{}, *struct{}, *struct{}, *struct{}, *struct{}](
 					eventStoreMock,
 					eventHandlerMock,
 					slog.Default(),
@@ -192,7 +220,9 @@ func TestTransactionHandler_HandleMethod(t *testing.T) {
 				err := handler.Handle(
 					tc.ctx,
 					tc.transaction,
-					func(_ uuid.UUID) entities.AggregateProvider { return aggregateProviderMock },
+					func(_ uuid.UUID) entities.AggregateProvider[*struct{}, *struct{}, *struct{}, *struct{}] {
+						return aggregateProviderMock
+					},
 				)
 
 				if tc.dataAssertion != nil {

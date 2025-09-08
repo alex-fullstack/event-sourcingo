@@ -9,35 +9,42 @@ import (
 	"github.com/google/uuid"
 )
 
-type TFACommitter interface {
-	Begin(context.Context) (executor interface{}, err error)
-	Commit(ctx context.Context, executor interface{}) error
-	Rollback(ctx context.Context, executor interface{}) error
+type TFACommitter[E any] interface {
+	Begin(context.Context) (executor E, err error)
+	Commit(ctx context.Context, executor E) error
+	Rollback(ctx context.Context, executor E) error
 }
 
-type EventStore interface {
-	TFACommitter
+type EventStore[T, S, E any] interface {
+	TFACommitter[E]
 	UpdateOrCreateAggregate(
 		ctx context.Context,
 		transactionID uuid.UUID,
-		reader entities.AggregateReader,
-		executor interface{},
-	) (err error)
-	GetAggregateEvents(
+		reader entities.AggregateReader[T],
+		snapshot S,
+		executor E,
+	) (snapshotCount int, err error)
+	GetLastSnapshot(
 		ctx context.Context,
 		id uuid.UUID,
-		executor interface{},
-	) ([]events.Event, error)
+		executor E,
+	) (int, S, error)
+	GetHistory(
+		ctx context.Context,
+		id uuid.UUID,
+		fromVersion int,
+		executor E,
+	) ([]events.Event[T], error)
 	GetNewEventsAndHistory(
 		ctx context.Context,
 		id uuid.UUID,
 		firstSequenceID, lastSequenceID int64,
-		executor interface{},
-	) ([]events.Event, []events.Event, error)
-	GetSubscription(ctx context.Context, executor interface{}) (*subscriptions.Subscription, error)
+		executor E,
+	) ([]events.Event[T], []events.Event[T], error)
+	GetSubscription(ctx context.Context, executor E) (*subscriptions.Subscription, error)
 	UpdateSubscription(
 		ctx context.Context,
 		sub *subscriptions.Subscription,
-		executor interface{},
+		executor E,
 	) error
 }

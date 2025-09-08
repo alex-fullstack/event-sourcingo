@@ -10,30 +10,30 @@ import (
 	"github.com/google/uuid"
 )
 
-type CommandHandler interface {
+type CommandHandler[T, S, P, K any] interface {
 	Handle(
 		ctx context.Context,
-		cmd commands.Command,
-		aggregate entities.AggregateProvider,
+		cmd commands.Command[T],
+		aggregate entities.AggregateProvider[T, S, P, K],
 	) error
 }
 
-type commandHandler struct {
-	store repositories.EventStore
-	saver repositories.ProjectionSaver
+type commandHandler[T, S, P, K, E any] struct {
+	store repositories.EventStore[T, S, E]
+	saver repositories.ProjectionStore[P]
 }
 
-func NewCommandHandler(
-	store repositories.EventStore,
-	saver repositories.ProjectionSaver,
-) CommandHandler {
-	return &commandHandler{store: store, saver: saver}
+func NewCommandHandler[T, S, P, K, E any](
+	store repositories.EventStore[T, S, E],
+	saver repositories.ProjectionStore[P],
+) CommandHandler[T, S, P, K] {
+	return &commandHandler[T, S, P, K, E]{store: store, saver: saver}
 }
 
-func (ch *commandHandler) Handle(
+func (ch *commandHandler[T, S, P, K, E]) Handle(
 	ctx context.Context,
-	cmd commands.Command,
-	aggregate entities.AggregateProvider,
+	cmd commands.Command[T],
+	aggregate entities.AggregateProvider[T, S, P, K],
 ) (err error) {
 	commitExecutor, beginErr := ch.store.Begin(ctx)
 	if beginErr != nil {
@@ -49,29 +49,46 @@ func (ch *commandHandler) Handle(
 			err = ch.store.Commit(ctx, commitExecutor)
 		}
 	}()
-	if err = ch.changeAggregate(ctx, cmd, uuid.New(), aggregate, commitExecutor); err != nil {
-		return err
-	}
-	return ch.saver.Save(ctx, aggregate.Projection())
-}
-
-func (ch *commandHandler) changeAggregate(
-	ctx context.Context,
-	cmd commands.Command,
-	transactionID uuid.UUID,
-	aggregate entities.AggregateProvider,
-	commitExecutor interface{},
-) error {
-	history, err := ch.store.GetAggregateEvents(ctx, aggregate.ID(), commitExecutor)
+	var offset int
+	offset, err = ch.changeAggregate(ctx, cmd, uuid.New(), aggregate, commitExecutor)
 	if err != nil {
 		return err
 	}
-	if err = aggregate.Build(history); err != nil {
-		return err
+	return ch.saver.Save(ctx, aggregate.Projection(offset))
+}
+
+func (ch *commandHandler[T, S, P, K, E]) changeAggregate(
+	ctx context.Context,
+	cmd commands.Command[T],
+	transactionID uuid.UUID,
+	aggregate entities.AggregateProvider[T, S, P, K],
+	commitExecutor E,
+) (int, error) {
+	version, payload, err := ch.store.GetLastSnapshot(ctx, aggregate.ID(), commitExecutor)
+	if err != nil {
+		return 0, err
 	}
-	newEvents := make([]events.Event, len(cmd.Events))
+	var currentVersion int
+	if version == 0 {
+		currentVersion = -1
+	} else {
+		currentVersion = version
+		if err = aggregate.BuildFromSnapshot(version, payload); err != nil {
+			return 0, err
+		}
+	}
+
+	var history []events.Event[T]
+	history, err = ch.store.GetHistory(ctx, aggregate.ID(), currentVersion+1, commitExecutor)
+	if err != nil {
+		return 0, err
+	}
+	if err = aggregate.Build(history); err != nil {
+		return 0, err
+	}
+	newEvents := make([]events.Event[T], len(cmd.Events))
 	for i, event := range cmd.Events {
-		newEvent, errNE := events.NewEvent(
+		newEvents[i] = events.NewEvent[T](
 			aggregate.ID(),
 			transactionID,
 			cmd.Type,
@@ -79,13 +96,15 @@ func (ch *commandHandler) changeAggregate(
 			event.Type,
 			event.Payload,
 		)
-		if errNE != nil {
-			return errNE
-		}
-		newEvents[i] = newEvent
 	}
 	if err = aggregate.ApplyChanges(newEvents); err != nil {
-		return err
+		return 0, err
 	}
-	return ch.store.UpdateOrCreateAggregate(ctx, transactionID, aggregate, commitExecutor)
+	return ch.store.UpdateOrCreateAggregate(
+		ctx,
+		transactionID,
+		aggregate,
+		aggregate.Snapshot(),
+		commitExecutor,
+	)
 }

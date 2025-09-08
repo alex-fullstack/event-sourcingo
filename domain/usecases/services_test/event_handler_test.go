@@ -16,93 +16,44 @@ import (
 type EventHandlerTestCase struct {
 	description   string
 	ctx           context.Context
-	history       []events.Event
-	newEvents     []events.Event
+	newEvents     []events.Event[*struct{}]
 	mockAssertion func(tc EventHandlerTestCase)
 	dataAssertion func(actual error)
 }
 
 func TestEventHandler_HandleMethod(t *testing.T) {
 	var (
-		aggregateProviderMock *entities.MockAggregateProvider
-		publisherMock         *repositories.MockPublisher
+		aggregateProviderMock *entities.MockAggregateProvider[*struct{}, *struct{}, *struct{}, *struct{}]
+		publisherMock         *repositories.MockPublisher[*struct{}]
 		errExpected           = errors.New("test error")
 		expectedID            = uuid.New()
-		expectedEvents        = []events.Event{
+		expectedEvents        = []events.Event[*struct{}]{
 			{AggregateID: expectedID},
 			{AggregateID: expectedID},
 		}
-		expectedIntegrationEvent = events.IntegrationEvent{}
+		expectedIntegrationEvent = events.IntegrationEvent[*struct{}]{}
 	)
 	testCases := []EventHandlerTestCase{
 		{
-			description: "Если при вызове метода HandleEvents не удалось собрать агрегат, то должна вернуться ошибка",
-			ctx:         context.Background(),
-			history:     expectedEvents,
-			mockAssertion: func(tc EventHandlerTestCase) {
-				aggregateProviderMock.EXPECT().Build(tc.history).Return(errExpected)
-			},
-			dataAssertion: func(actual error) {
-				assert.Equal(t, errExpected, actual)
-			},
-		},
-		{
-			description: "Если при вызове метода HandleEvents не удалось обновить агрегат, то должна вернуться ошибка",
-			ctx:         context.Background(),
-			history:     expectedEvents,
-			newEvents:   expectedEvents,
-			mockAssertion: func(tc EventHandlerTestCase) {
-				aggregateProviderMock.EXPECT().Build(tc.history).Return(nil)
-				aggregateProviderMock.EXPECT().
-					ApplyChanges([]events.Event{tc.newEvents[0]}).
-					Return(errExpected)
-			},
-			dataAssertion: func(actual error) {
-				assert.Equal(t, errExpected, actual)
-			},
-		},
-		{
-			description: "Если при вызове метода HandleEvents не удалось сгенерировать интеграционное событие, то должна вернуться ошибка", //nolint:lll
-			ctx:         context.Background(),
-			history:     expectedEvents,
-			newEvents:   expectedEvents,
-			mockAssertion: func(tc EventHandlerTestCase) {
-				aggregateProviderMock.EXPECT().Build(tc.history).Return(nil)
-				aggregateProviderMock.EXPECT().
-					ApplyChanges([]events.Event{tc.newEvents[0]}).
-					Return(nil)
-				aggregateProviderMock.EXPECT().
-					ApplyChanges([]events.Event{tc.newEvents[1]}).
-					Return(nil)
-				aggregateProviderMock.EXPECT().
-					IntegrationEvent(0).
-					Return(events.IntegrationEvent{}, errExpected)
-			},
-			dataAssertion: func(actual error) {
-				assert.Equal(t, errExpected, actual)
-			},
-		},
-		{
 			description: "Если при вызове метода HandleEvents не удалось опубликовать интеграционные события, то должна вернуться ошибка", //nolint:lll
 			ctx:         context.Background(),
-			history:     expectedEvents,
 			newEvents:   expectedEvents,
 			mockAssertion: func(tc EventHandlerTestCase) {
-				aggregateProviderMock.EXPECT().Build(tc.history).Return(nil)
-				aggregateProviderMock.EXPECT().
-					ApplyChanges([]events.Event{tc.newEvents[0]}).
-					Return(nil)
+				aggregateProviderMock.EXPECT().ApplyChange(expectedEvents[0]).Return(nil)
+				aggregateProviderMock.EXPECT().ApplyChange(expectedEvents[1]).Return(nil)
 				aggregateProviderMock.EXPECT().
 					IntegrationEvent(0).
-					Return(expectedIntegrationEvent, nil)
+					Return(expectedIntegrationEvent)
 				aggregateProviderMock.EXPECT().
 					IntegrationEvent(0).
-					Return(expectedIntegrationEvent, nil)
-				aggregateProviderMock.EXPECT().
-					ApplyChanges([]events.Event{tc.newEvents[1]}).
-					Return(nil)
+					Return(expectedIntegrationEvent)
 				publisherMock.EXPECT().
-					Publish(tc.ctx, []events.IntegrationEvent{expectedIntegrationEvent, expectedIntegrationEvent}).
+					Publish(
+						tc.ctx,
+						[]events.IntegrationEvent[*struct{}]{
+							expectedIntegrationEvent,
+							expectedIntegrationEvent,
+						}).
 					Return(errExpected)
 			},
 			dataAssertion: func(actual error) {
@@ -112,24 +63,18 @@ func TestEventHandler_HandleMethod(t *testing.T) {
 		{
 			description: "При успешной публикации интеграционных событий метод HandleEvents должнен возвращать пустой результат без ошибки", //nolint:lll
 			ctx:         context.Background(),
-			history:     expectedEvents,
 			newEvents:   expectedEvents,
 			mockAssertion: func(tc EventHandlerTestCase) {
-				aggregateProviderMock.EXPECT().Build(tc.history).Return(nil)
-				aggregateProviderMock.EXPECT().
-					ApplyChanges([]events.Event{tc.newEvents[0]}).
-					Return(nil)
+				aggregateProviderMock.EXPECT().ApplyChange(expectedEvents[0]).Return(nil)
+				aggregateProviderMock.EXPECT().ApplyChange(expectedEvents[1]).Return(nil)
 				aggregateProviderMock.EXPECT().
 					IntegrationEvent(0).
-					Return(expectedIntegrationEvent, nil)
+					Return(expectedIntegrationEvent)
 				aggregateProviderMock.EXPECT().
 					IntegrationEvent(0).
-					Return(expectedIntegrationEvent, nil)
-				aggregateProviderMock.EXPECT().
-					ApplyChanges([]events.Event{tc.newEvents[1]}).
-					Return(nil)
+					Return(expectedIntegrationEvent)
 				publisherMock.EXPECT().Publish(
-					tc.ctx, []events.IntegrationEvent{expectedIntegrationEvent, expectedIntegrationEvent}).
+					tc.ctx, []events.IntegrationEvent[*struct{}]{expectedIntegrationEvent, expectedIntegrationEvent}).
 					Return(nil)
 			},
 			dataAssertion: func(actual error) {
@@ -142,12 +87,20 @@ func TestEventHandler_HandleMethod(t *testing.T) {
 		t.Run(
 			tc.description,
 			func(t *testing.T) {
-				publisherMock = repositories.NewMockPublisher(t)
-				aggregateProviderMock = entities.NewMockAggregateProvider(t)
+				publisherMock = repositories.NewMockPublisher[*struct{}](t)
+				aggregateProviderMock = entities.NewMockAggregateProvider[*struct{}, *struct{}, *struct{}, *struct{}](
+					t,
+				)
 				tc.mockAssertion(tc)
 
-				handler := services.NewEventHandler(publisherMock)
-				err := handler.HandleEvents(tc.ctx, tc.history, tc.newEvents, aggregateProviderMock)
+				handler := services.NewEventHandler[*struct{}, *struct{}, *struct{}, *struct{}](
+					publisherMock,
+				)
+				err := handler.HandleEvents(
+					tc.ctx,
+					aggregateProviderMock,
+					tc.newEvents,
+				)
 
 				if tc.dataAssertion != nil {
 					tc.dataAssertion(err)

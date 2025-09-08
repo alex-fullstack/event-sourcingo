@@ -21,12 +21,12 @@ type consumer struct {
 	*endpoints.Endpoint
 }
 
-func NewTransactionConsumer(
+func NewTransactionConsumer[T, S, P, K, E any](
 	ctx context.Context,
 	ch string,
 	conn *pgxpool.Conn,
-	handler services.TransactionHandler,
-	providerFn func(id uuid.UUID) entities.AggregateProvider,
+	handler services.TransactionHandler[T, S, P, K, E],
+	providerFn func(id uuid.UUID) entities.AggregateProvider[T, S, P, K],
 ) endpoints.EndpointStarter {
 	logger := slog.Default()
 	listener := postgresql.NewListener(
