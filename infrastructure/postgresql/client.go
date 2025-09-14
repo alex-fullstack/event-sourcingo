@@ -246,17 +246,20 @@ func (db *PostgresDB[T, S]) UpdateOrCreateAggregate(
 	if err != nil {
 		return 0, err
 	}
+	offset := nextVersion / db.snapshotEventMultiplicator
 	if nextVersion/db.snapshotEventMultiplicator > currentVersion/db.snapshotEventMultiplicator {
 		err = db.insertSnapshot(ctx, reader.ID(), nextVersion, snapshot, tx)
+		if err != nil {
+			return 0, err
+		}
+		offset--
 	}
-	if err != nil {
-		return 0, err
-	}
+
 	err = db.insertEvents(ctx, reader.Changes(), tx)
 	if err != nil {
 		return 0, err
 	}
-	return nextVersion / db.snapshotEventMultiplicator, db.insertTransaction(
+	return offset, db.insertTransaction(
 		ctx,
 		transactionID,
 		reader.ID(),
