@@ -66,10 +66,10 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 				eventStoreMock.EXPECT().Begin(tc.ctx).Return(expectedExecutor, nil)
 				aggregateProviderMock.EXPECT().ID().Return(expectedID)
 				eventStoreMock.EXPECT().
-					GetLastSnapshot(tc.ctx, expectedID, expectedExecutor).
+					GetSnapshot(tc.ctx, expectedID, func() *int { return nil }(), expectedExecutor).
 					Return(0, nil, nil)
 				eventStoreMock.EXPECT().
-					GetHistory(tc.ctx, expectedID, 0, expectedExecutor).
+					GetEvents(tc.ctx, expectedID, 0, func() *int { return nil }(), expectedExecutor).
 					Return(nil, errExpected)
 				eventStoreMock.EXPECT().Rollback(tc.ctx, expectedExecutor).Return(nil)
 			},
@@ -84,10 +84,10 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 				eventStoreMock.EXPECT().Begin(tc.ctx).Return(expectedExecutor, nil)
 				aggregateProviderMock.EXPECT().ID().Return(expectedID)
 				eventStoreMock.EXPECT().
-					GetLastSnapshot(tc.ctx, expectedID, expectedExecutor).
+					GetSnapshot(tc.ctx, expectedID, func() *int { return nil }(), expectedExecutor).
 					Return(0, nil, nil)
 				eventStoreMock.EXPECT().
-					GetHistory(tc.ctx, expectedID, 0, expectedExecutor).
+					GetEvents(tc.ctx, expectedID, 0, func() *int { return nil }(), expectedExecutor).
 					Return(expectedEvents, nil)
 				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(errExpected)
 				eventStoreMock.EXPECT().Rollback(tc.ctx, expectedExecutor).Return(nil)
@@ -104,10 +104,10 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 				eventStoreMock.EXPECT().Begin(tc.ctx).Return(expectedExecutor, nil)
 				aggregateProviderMock.EXPECT().ID().Return(expectedID).Times(4)
 				eventStoreMock.EXPECT().
-					GetLastSnapshot(tc.ctx, expectedID, expectedExecutor).
+					GetSnapshot(tc.ctx, expectedID, func() *int { return nil }(), expectedExecutor).
 					Return(0, nil, nil)
 				eventStoreMock.EXPECT().
-					GetHistory(tc.ctx, expectedID, 0, expectedExecutor).
+					GetEvents(tc.ctx, expectedID, 0, func() *int { return nil }(), expectedExecutor).
 					Return(expectedEvents, nil)
 				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
 				aggregateProviderMock.EXPECT().Version().Return(0)
@@ -126,10 +126,10 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 				eventStoreMock.EXPECT().Begin(tc.ctx).Return(expectedExecutor, nil)
 				aggregateProviderMock.EXPECT().ID().Return(expectedID).Times(4)
 				eventStoreMock.EXPECT().
-					GetLastSnapshot(tc.ctx, expectedID, expectedExecutor).
+					GetSnapshot(tc.ctx, expectedID, func() *int { return nil }(), expectedExecutor).
 					Return(0, nil, nil)
 				eventStoreMock.EXPECT().
-					GetHistory(tc.ctx, expectedID, 0, expectedExecutor).
+					GetEvents(tc.ctx, expectedID, 0, func() *int { return nil }(), expectedExecutor).
 					Return(expectedEvents, nil)
 				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
 				aggregateProviderMock.EXPECT().Version().Return(0)
@@ -143,7 +143,7 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 						mock.Anything,
 						expectedExecutor,
 					).
-					Return(0, errExpected)
+					Return(errExpected)
 				eventStoreMock.EXPECT().Rollback(tc.ctx, expectedExecutor).Return(nil)
 			},
 			dataAssertion: func(actual error) {
@@ -158,10 +158,10 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 				eventStoreMock.EXPECT().Begin(tc.ctx).Return(expectedExecutor, nil)
 				aggregateProviderMock.EXPECT().ID().Return(expectedID).Times(4)
 				eventStoreMock.EXPECT().
-					GetLastSnapshot(tc.ctx, expectedID, expectedExecutor).
+					GetSnapshot(tc.ctx, expectedID, func() *int { return nil }(), expectedExecutor).
 					Return(0, nil, nil)
 				eventStoreMock.EXPECT().
-					GetHistory(tc.ctx, expectedID, 0, expectedExecutor).
+					GetEvents(tc.ctx, expectedID, 0, func() *int { return nil }(), expectedExecutor).
 					Return(expectedEvents, nil)
 				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
 				aggregateProviderMock.EXPECT().Version().Return(0)
@@ -174,9 +174,9 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 						mock.Anything,
 						expectedExecutor,
 					).
-					Return(0, nil)
+					Return(nil)
 				aggregateProviderMock.EXPECT().Snapshot().Return(expectedSnapshot)
-				aggregateProviderMock.EXPECT().Projection(0).Return(expectedProjection)
+				aggregateProviderMock.EXPECT().Projection().Return(expectedProjection)
 				saverMock.EXPECT().Save(tc.ctx, expectedProjection).Return(errExpected)
 				eventStoreMock.EXPECT().Rollback(tc.ctx, expectedExecutor).Return(nil)
 			},
@@ -192,10 +192,10 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 				eventStoreMock.EXPECT().Begin(tc.ctx).Return(expectedExecutor, nil)
 				aggregateProviderMock.EXPECT().ID().Return(expectedID).Times(4)
 				eventStoreMock.EXPECT().
-					GetLastSnapshot(tc.ctx, expectedID, expectedExecutor).
+					GetSnapshot(tc.ctx, expectedID, func() *int { return nil }(), expectedExecutor).
 					Return(0, nil, nil)
 				eventStoreMock.EXPECT().
-					GetHistory(tc.ctx, expectedID, 0, expectedExecutor).
+					GetEvents(tc.ctx, expectedID, 0, func() *int { return nil }(), expectedExecutor).
 					Return(expectedEvents, nil)
 				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
 				aggregateProviderMock.EXPECT().Version().Return(0)
@@ -208,9 +208,9 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 						mock.Anything,
 						expectedExecutor,
 					).
-					Return(0, nil)
+					Return(nil)
 				aggregateProviderMock.EXPECT().Snapshot().Return(expectedSnapshot)
-				aggregateProviderMock.EXPECT().Projection(0).Return(expectedProjection)
+				aggregateProviderMock.EXPECT().Projection().Return(expectedProjection)
 				saverMock.EXPECT().Save(tc.ctx, expectedProjection).Return(nil)
 				eventStoreMock.EXPECT().Commit(tc.ctx, expectedExecutor).Return(errExpected)
 			},
@@ -226,10 +226,10 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 				eventStoreMock.EXPECT().Begin(tc.ctx).Return(expectedExecutor, nil)
 				aggregateProviderMock.EXPECT().ID().Return(expectedID).Times(4)
 				eventStoreMock.EXPECT().
-					GetLastSnapshot(tc.ctx, expectedID, expectedExecutor).
+					GetSnapshot(tc.ctx, expectedID, func() *int { return nil }(), expectedExecutor).
 					Return(0, nil, nil)
 				eventStoreMock.EXPECT().
-					GetHistory(tc.ctx, expectedID, 0, expectedExecutor).
+					GetEvents(tc.ctx, expectedID, 0, func() *int { return nil }(), expectedExecutor).
 					Return(expectedEvents, nil)
 				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
 				aggregateProviderMock.EXPECT().Version().Return(0)
@@ -240,9 +240,9 @@ func TestCommandHandler_HandleMethod(t *testing.T) {
 					aggregateProviderMock,
 					mock.Anything,
 					expectedExecutor,
-				).Return(0, nil)
+				).Return(nil)
 				aggregateProviderMock.EXPECT().Snapshot().Return(expectedSnapshot)
-				aggregateProviderMock.EXPECT().Projection(0).Return(expectedProjection)
+				aggregateProviderMock.EXPECT().Projection().Return(expectedProjection)
 				saverMock.EXPECT().Save(tc.ctx, expectedProjection).Return(nil)
 				eventStoreMock.EXPECT().Commit(tc.ctx, expectedExecutor).Return(nil)
 			},

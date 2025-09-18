@@ -252,6 +252,51 @@ func (_c *MockAggregateProvider_BuildFromSnapshot_Call[T, S, P, K]) RunAndReturn
 	return _c
 }
 
+// Cap provides a mock function with no fields
+func (_m *MockAggregateProvider[T, S, P, K]) Cap() int {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Cap")
+	}
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func() int); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	return r0
+}
+
+// MockAggregateProvider_Cap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Cap'
+type MockAggregateProvider_Cap_Call[T interface{}, S interface{}, P interface{}, K interface{}] struct {
+	*mock.Call
+}
+
+// Cap is a helper method to define mock.On call
+func (_e *MockAggregateProvider_Expecter[T, S, P, K]) Cap() *MockAggregateProvider_Cap_Call[T, S, P, K] {
+	return &MockAggregateProvider_Cap_Call[T, S, P, K]{Call: _e.mock.On("Cap")}
+}
+
+func (_c *MockAggregateProvider_Cap_Call[T, S, P, K]) Run(run func()) *MockAggregateProvider_Cap_Call[T, S, P, K] {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockAggregateProvider_Cap_Call[T, S, P, K]) Return(_a0 int) *MockAggregateProvider_Cap_Call[T, S, P, K] {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockAggregateProvider_Cap_Call[T, S, P, K]) RunAndReturn(run func() int) *MockAggregateProvider_Cap_Call[T, S, P, K] {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Changes provides a mock function with no fields
 func (_m *MockAggregateProvider[T, S, P, K]) Changes() []events.Event[T] {
 	ret := _m.Called()
@@ -392,17 +437,17 @@ func (_c *MockAggregateProvider_IntegrationEvent_Call[T, S, P, K]) RunAndReturn(
 	return _c
 }
 
-// Projection provides a mock function with given fields: offset
-func (_m *MockAggregateProvider[T, S, P, K]) Projection(offset int) P {
-	ret := _m.Called(offset)
+// Projection provides a mock function with no fields
+func (_m *MockAggregateProvider[T, S, P, K]) Projection() P {
+	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Projection")
 	}
 
 	var r0 P
-	if rf, ok := ret.Get(0).(func(int) P); ok {
-		r0 = rf(offset)
+	if rf, ok := ret.Get(0).(func() P); ok {
+		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(P)
@@ -418,14 +463,13 @@ type MockAggregateProvider_Projection_Call[T interface{}, S interface{}, P inter
 }
 
 // Projection is a helper method to define mock.On call
-//   - offset int
-func (_e *MockAggregateProvider_Expecter[T, S, P, K]) Projection(offset interface{}) *MockAggregateProvider_Projection_Call[T, S, P, K] {
-	return &MockAggregateProvider_Projection_Call[T, S, P, K]{Call: _e.mock.On("Projection", offset)}
+func (_e *MockAggregateProvider_Expecter[T, S, P, K]) Projection() *MockAggregateProvider_Projection_Call[T, S, P, K] {
+	return &MockAggregateProvider_Projection_Call[T, S, P, K]{Call: _e.mock.On("Projection")}
 }
 
-func (_c *MockAggregateProvider_Projection_Call[T, S, P, K]) Run(run func(offset int)) *MockAggregateProvider_Projection_Call[T, S, P, K] {
+func (_c *MockAggregateProvider_Projection_Call[T, S, P, K]) Run(run func()) *MockAggregateProvider_Projection_Call[T, S, P, K] {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(int))
+		run()
 	})
 	return _c
 }
@@ -435,7 +479,7 @@ func (_c *MockAggregateProvider_Projection_Call[T, S, P, K]) Return(_a0 P) *Mock
 	return _c
 }
 
-func (_c *MockAggregateProvider_Projection_Call[T, S, P, K]) RunAndReturn(run func(int) P) *MockAggregateProvider_Projection_Call[T, S, P, K] {
+func (_c *MockAggregateProvider_Projection_Call[T, S, P, K]) RunAndReturn(run func() P) *MockAggregateProvider_Projection_Call[T, S, P, K] {
 	_c.Call.Return(run)
 	return _c
 }

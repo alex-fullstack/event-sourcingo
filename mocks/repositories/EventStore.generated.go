@@ -133,29 +133,29 @@ func (_c *MockEventStore_Commit_Call[T, S, E]) RunAndReturn(run func(context.Con
 	return _c
 }
 
-// GetHistory provides a mock function with given fields: ctx, id, fromVersion, executor
-func (_m *MockEventStore[T, S, E]) GetHistory(ctx context.Context, id uuid.UUID, fromVersion int, executor E) ([]events.Event[T], error) {
-	ret := _m.Called(ctx, id, fromVersion, executor)
+// GetEvents provides a mock function with given fields: ctx, id, fromVersion, toVersion, executor
+func (_m *MockEventStore[T, S, E]) GetEvents(ctx context.Context, id uuid.UUID, fromVersion int, toVersion *int, executor E) ([]events.Event[T], error) {
+	ret := _m.Called(ctx, id, fromVersion, toVersion, executor)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetHistory")
+		panic("no return value specified for GetEvents")
 	}
 
 	var r0 []events.Event[T]
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int, E) ([]events.Event[T], error)); ok {
-		return rf(ctx, id, fromVersion, executor)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int, *int, E) ([]events.Event[T], error)); ok {
+		return rf(ctx, id, fromVersion, toVersion, executor)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int, E) []events.Event[T]); ok {
-		r0 = rf(ctx, id, fromVersion, executor)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int, *int, E) []events.Event[T]); ok {
+		r0 = rf(ctx, id, fromVersion, toVersion, executor)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]events.Event[T])
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, int, E) error); ok {
-		r1 = rf(ctx, id, fromVersion, executor)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, int, *int, E) error); ok {
+		r1 = rf(ctx, id, fromVersion, toVersion, executor)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -163,67 +163,68 @@ func (_m *MockEventStore[T, S, E]) GetHistory(ctx context.Context, id uuid.UUID,
 	return r0, r1
 }
 
-// MockEventStore_GetHistory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetHistory'
-type MockEventStore_GetHistory_Call[T interface{}, S interface{}, E interface{}] struct {
+// MockEventStore_GetEvents_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetEvents'
+type MockEventStore_GetEvents_Call[T interface{}, S interface{}, E interface{}] struct {
 	*mock.Call
 }
 
-// GetHistory is a helper method to define mock.On call
+// GetEvents is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
 //   - fromVersion int
+//   - toVersion *int
 //   - executor E
-func (_e *MockEventStore_Expecter[T, S, E]) GetHistory(ctx interface{}, id interface{}, fromVersion interface{}, executor interface{}) *MockEventStore_GetHistory_Call[T, S, E] {
-	return &MockEventStore_GetHistory_Call[T, S, E]{Call: _e.mock.On("GetHistory", ctx, id, fromVersion, executor)}
+func (_e *MockEventStore_Expecter[T, S, E]) GetEvents(ctx interface{}, id interface{}, fromVersion interface{}, toVersion interface{}, executor interface{}) *MockEventStore_GetEvents_Call[T, S, E] {
+	return &MockEventStore_GetEvents_Call[T, S, E]{Call: _e.mock.On("GetEvents", ctx, id, fromVersion, toVersion, executor)}
 }
 
-func (_c *MockEventStore_GetHistory_Call[T, S, E]) Run(run func(ctx context.Context, id uuid.UUID, fromVersion int, executor E)) *MockEventStore_GetHistory_Call[T, S, E] {
+func (_c *MockEventStore_GetEvents_Call[T, S, E]) Run(run func(ctx context.Context, id uuid.UUID, fromVersion int, toVersion *int, executor E)) *MockEventStore_GetEvents_Call[T, S, E] {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(int), args[3].(E))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(int), args[3].(*int), args[4].(E))
 	})
 	return _c
 }
 
-func (_c *MockEventStore_GetHistory_Call[T, S, E]) Return(_a0 []events.Event[T], _a1 error) *MockEventStore_GetHistory_Call[T, S, E] {
+func (_c *MockEventStore_GetEvents_Call[T, S, E]) Return(_a0 []events.Event[T], _a1 error) *MockEventStore_GetEvents_Call[T, S, E] {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockEventStore_GetHistory_Call[T, S, E]) RunAndReturn(run func(context.Context, uuid.UUID, int, E) ([]events.Event[T], error)) *MockEventStore_GetHistory_Call[T, S, E] {
+func (_c *MockEventStore_GetEvents_Call[T, S, E]) RunAndReturn(run func(context.Context, uuid.UUID, int, *int, E) ([]events.Event[T], error)) *MockEventStore_GetEvents_Call[T, S, E] {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetLastSnapshot provides a mock function with given fields: ctx, id, executor
-func (_m *MockEventStore[T, S, E]) GetLastSnapshot(ctx context.Context, id uuid.UUID, executor E) (int, S, error) {
-	ret := _m.Called(ctx, id, executor)
+// GetSnapshot provides a mock function with given fields: ctx, id, versionAfter, executor
+func (_m *MockEventStore[T, S, E]) GetSnapshot(ctx context.Context, id uuid.UUID, versionAfter *int, executor E) (int, S, error) {
+	ret := _m.Called(ctx, id, versionAfter, executor)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetLastSnapshot")
+		panic("no return value specified for GetSnapshot")
 	}
 
 	var r0 int
 	var r1 S
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, E) (int, S, error)); ok {
-		return rf(ctx, id, executor)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, *int, E) (int, S, error)); ok {
+		return rf(ctx, id, versionAfter, executor)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, E) int); ok {
-		r0 = rf(ctx, id, executor)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, *int, E) int); ok {
+		r0 = rf(ctx, id, versionAfter, executor)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, E) S); ok {
-		r1 = rf(ctx, id, executor)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, *int, E) S); ok {
+		r1 = rf(ctx, id, versionAfter, executor)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(S)
 		}
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, uuid.UUID, E) error); ok {
-		r2 = rf(ctx, id, executor)
+	if rf, ok := ret.Get(2).(func(context.Context, uuid.UUID, *int, E) error); ok {
+		r2 = rf(ctx, id, versionAfter, executor)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -231,103 +232,33 @@ func (_m *MockEventStore[T, S, E]) GetLastSnapshot(ctx context.Context, id uuid.
 	return r0, r1, r2
 }
 
-// MockEventStore_GetLastSnapshot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLastSnapshot'
-type MockEventStore_GetLastSnapshot_Call[T interface{}, S interface{}, E interface{}] struct {
+// MockEventStore_GetSnapshot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSnapshot'
+type MockEventStore_GetSnapshot_Call[T interface{}, S interface{}, E interface{}] struct {
 	*mock.Call
 }
 
-// GetLastSnapshot is a helper method to define mock.On call
+// GetSnapshot is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
+//   - versionAfter *int
 //   - executor E
-func (_e *MockEventStore_Expecter[T, S, E]) GetLastSnapshot(ctx interface{}, id interface{}, executor interface{}) *MockEventStore_GetLastSnapshot_Call[T, S, E] {
-	return &MockEventStore_GetLastSnapshot_Call[T, S, E]{Call: _e.mock.On("GetLastSnapshot", ctx, id, executor)}
+func (_e *MockEventStore_Expecter[T, S, E]) GetSnapshot(ctx interface{}, id interface{}, versionAfter interface{}, executor interface{}) *MockEventStore_GetSnapshot_Call[T, S, E] {
+	return &MockEventStore_GetSnapshot_Call[T, S, E]{Call: _e.mock.On("GetSnapshot", ctx, id, versionAfter, executor)}
 }
 
-func (_c *MockEventStore_GetLastSnapshot_Call[T, S, E]) Run(run func(ctx context.Context, id uuid.UUID, executor E)) *MockEventStore_GetLastSnapshot_Call[T, S, E] {
+func (_c *MockEventStore_GetSnapshot_Call[T, S, E]) Run(run func(ctx context.Context, id uuid.UUID, versionAfter *int, executor E)) *MockEventStore_GetSnapshot_Call[T, S, E] {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(E))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(*int), args[3].(E))
 	})
 	return _c
 }
 
-func (_c *MockEventStore_GetLastSnapshot_Call[T, S, E]) Return(_a0 int, _a1 S, _a2 error) *MockEventStore_GetLastSnapshot_Call[T, S, E] {
+func (_c *MockEventStore_GetSnapshot_Call[T, S, E]) Return(_a0 int, _a1 S, _a2 error) *MockEventStore_GetSnapshot_Call[T, S, E] {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockEventStore_GetLastSnapshot_Call[T, S, E]) RunAndReturn(run func(context.Context, uuid.UUID, E) (int, S, error)) *MockEventStore_GetLastSnapshot_Call[T, S, E] {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetNewEventsAndHistory provides a mock function with given fields: ctx, id, firstSequenceID, lastSequenceID, executor
-func (_m *MockEventStore[T, S, E]) GetNewEventsAndHistory(ctx context.Context, id uuid.UUID, firstSequenceID int64, lastSequenceID int64, executor E) ([]events.Event[T], []events.Event[T], error) {
-	ret := _m.Called(ctx, id, firstSequenceID, lastSequenceID, executor)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNewEventsAndHistory")
-	}
-
-	var r0 []events.Event[T]
-	var r1 []events.Event[T]
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int64, int64, E) ([]events.Event[T], []events.Event[T], error)); ok {
-		return rf(ctx, id, firstSequenceID, lastSequenceID, executor)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int64, int64, E) []events.Event[T]); ok {
-		r0 = rf(ctx, id, firstSequenceID, lastSequenceID, executor)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]events.Event[T])
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, int64, int64, E) []events.Event[T]); ok {
-		r1 = rf(ctx, id, firstSequenceID, lastSequenceID, executor)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]events.Event[T])
-		}
-	}
-
-	if rf, ok := ret.Get(2).(func(context.Context, uuid.UUID, int64, int64, E) error); ok {
-		r2 = rf(ctx, id, firstSequenceID, lastSequenceID, executor)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
-// MockEventStore_GetNewEventsAndHistory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetNewEventsAndHistory'
-type MockEventStore_GetNewEventsAndHistory_Call[T interface{}, S interface{}, E interface{}] struct {
-	*mock.Call
-}
-
-// GetNewEventsAndHistory is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id uuid.UUID
-//   - firstSequenceID int64
-//   - lastSequenceID int64
-//   - executor E
-func (_e *MockEventStore_Expecter[T, S, E]) GetNewEventsAndHistory(ctx interface{}, id interface{}, firstSequenceID interface{}, lastSequenceID interface{}, executor interface{}) *MockEventStore_GetNewEventsAndHistory_Call[T, S, E] {
-	return &MockEventStore_GetNewEventsAndHistory_Call[T, S, E]{Call: _e.mock.On("GetNewEventsAndHistory", ctx, id, firstSequenceID, lastSequenceID, executor)}
-}
-
-func (_c *MockEventStore_GetNewEventsAndHistory_Call[T, S, E]) Run(run func(ctx context.Context, id uuid.UUID, firstSequenceID int64, lastSequenceID int64, executor E)) *MockEventStore_GetNewEventsAndHistory_Call[T, S, E] {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(int64), args[3].(int64), args[4].(E))
-	})
-	return _c
-}
-
-func (_c *MockEventStore_GetNewEventsAndHistory_Call[T, S, E]) Return(_a0 []events.Event[T], _a1 []events.Event[T], _a2 error) *MockEventStore_GetNewEventsAndHistory_Call[T, S, E] {
-	_c.Call.Return(_a0, _a1, _a2)
-	return _c
-}
-
-func (_c *MockEventStore_GetNewEventsAndHistory_Call[T, S, E]) RunAndReturn(run func(context.Context, uuid.UUID, int64, int64, E) ([]events.Event[T], []events.Event[T], error)) *MockEventStore_GetNewEventsAndHistory_Call[T, S, E] {
+func (_c *MockEventStore_GetSnapshot_Call[T, S, E]) RunAndReturn(run func(context.Context, uuid.UUID, *int, E) (int, S, error)) *MockEventStore_GetSnapshot_Call[T, S, E] {
 	_c.Call.Return(run)
 	return _c
 }
@@ -391,6 +322,68 @@ func (_c *MockEventStore_GetSubscription_Call[T, S, E]) RunAndReturn(run func(co
 	return _c
 }
 
+// GetUnhandledEvents provides a mock function with given fields: ctx, id, firstSequenceID, lastSequenceID, executor
+func (_m *MockEventStore[T, S, E]) GetUnhandledEvents(ctx context.Context, id uuid.UUID, firstSequenceID int64, lastSequenceID int64, executor E) ([]events.Event[T], error) {
+	ret := _m.Called(ctx, id, firstSequenceID, lastSequenceID, executor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUnhandledEvents")
+	}
+
+	var r0 []events.Event[T]
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int64, int64, E) ([]events.Event[T], error)); ok {
+		return rf(ctx, id, firstSequenceID, lastSequenceID, executor)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, int64, int64, E) []events.Event[T]); ok {
+		r0 = rf(ctx, id, firstSequenceID, lastSequenceID, executor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]events.Event[T])
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, int64, int64, E) error); ok {
+		r1 = rf(ctx, id, firstSequenceID, lastSequenceID, executor)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockEventStore_GetUnhandledEvents_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUnhandledEvents'
+type MockEventStore_GetUnhandledEvents_Call[T interface{}, S interface{}, E interface{}] struct {
+	*mock.Call
+}
+
+// GetUnhandledEvents is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - firstSequenceID int64
+//   - lastSequenceID int64
+//   - executor E
+func (_e *MockEventStore_Expecter[T, S, E]) GetUnhandledEvents(ctx interface{}, id interface{}, firstSequenceID interface{}, lastSequenceID interface{}, executor interface{}) *MockEventStore_GetUnhandledEvents_Call[T, S, E] {
+	return &MockEventStore_GetUnhandledEvents_Call[T, S, E]{Call: _e.mock.On("GetUnhandledEvents", ctx, id, firstSequenceID, lastSequenceID, executor)}
+}
+
+func (_c *MockEventStore_GetUnhandledEvents_Call[T, S, E]) Run(run func(ctx context.Context, id uuid.UUID, firstSequenceID int64, lastSequenceID int64, executor E)) *MockEventStore_GetUnhandledEvents_Call[T, S, E] {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(int64), args[3].(int64), args[4].(E))
+	})
+	return _c
+}
+
+func (_c *MockEventStore_GetUnhandledEvents_Call[T, S, E]) Return(_a0 []events.Event[T], _a1 error) *MockEventStore_GetUnhandledEvents_Call[T, S, E] {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockEventStore_GetUnhandledEvents_Call[T, S, E]) RunAndReturn(run func(context.Context, uuid.UUID, int64, int64, E) ([]events.Event[T], error)) *MockEventStore_GetUnhandledEvents_Call[T, S, E] {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Rollback provides a mock function with given fields: ctx, executor
 func (_m *MockEventStore[T, S, E]) Rollback(ctx context.Context, executor E) error {
 	ret := _m.Called(ctx, executor)
@@ -439,31 +432,21 @@ func (_c *MockEventStore_Rollback_Call[T, S, E]) RunAndReturn(run func(context.C
 }
 
 // UpdateOrCreateAggregate provides a mock function with given fields: ctx, transactionID, reader, snapshot, executor
-func (_m *MockEventStore[T, S, E]) UpdateOrCreateAggregate(ctx context.Context, transactionID uuid.UUID, reader entities.AggregateReader[T], snapshot S, executor E) (int, error) {
+func (_m *MockEventStore[T, S, E]) UpdateOrCreateAggregate(ctx context.Context, transactionID uuid.UUID, reader entities.AggregateReader[T], snapshot S, executor E) error {
 	ret := _m.Called(ctx, transactionID, reader, snapshot, executor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateOrCreateAggregate")
 	}
 
-	var r0 int
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entities.AggregateReader[T], S, E) (int, error)); ok {
-		return rf(ctx, transactionID, reader, snapshot, executor)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entities.AggregateReader[T], S, E) int); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entities.AggregateReader[T], S, E) error); ok {
 		r0 = rf(ctx, transactionID, reader, snapshot, executor)
 	} else {
-		r0 = ret.Get(0).(int)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, entities.AggregateReader[T], S, E) error); ok {
-		r1 = rf(ctx, transactionID, reader, snapshot, executor)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockEventStore_UpdateOrCreateAggregate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateOrCreateAggregate'
@@ -488,12 +471,12 @@ func (_c *MockEventStore_UpdateOrCreateAggregate_Call[T, S, E]) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockEventStore_UpdateOrCreateAggregate_Call[T, S, E]) Return(snapshotCount int, err error) *MockEventStore_UpdateOrCreateAggregate_Call[T, S, E] {
-	_c.Call.Return(snapshotCount, err)
+func (_c *MockEventStore_UpdateOrCreateAggregate_Call[T, S, E]) Return(_a0 error) *MockEventStore_UpdateOrCreateAggregate_Call[T, S, E] {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockEventStore_UpdateOrCreateAggregate_Call[T, S, E]) RunAndReturn(run func(context.Context, uuid.UUID, entities.AggregateReader[T], S, E) (int, error)) *MockEventStore_UpdateOrCreateAggregate_Call[T, S, E] {
+func (_c *MockEventStore_UpdateOrCreateAggregate_Call[T, S, E]) RunAndReturn(run func(context.Context, uuid.UUID, entities.AggregateReader[T], S, E) error) *MockEventStore_UpdateOrCreateAggregate_Call[T, S, E] {
 	_c.Call.Return(run)
 	return _c
 }

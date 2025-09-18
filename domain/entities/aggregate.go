@@ -9,6 +9,7 @@ import (
 
 type AggregateReader[T any] interface {
 	ID() uuid.UUID
+	Cap() int
 	Version() int
 	BaseVersion() int
 	Changes() []events.Event[T]
@@ -25,12 +26,13 @@ type AggregateProvider[T, S, P, K any] interface {
 	AggregateReader[T]
 	AggregateWriter[T, S]
 	Snapshot() S
-	Projection(offset int) P
+	Projection() P
 	IntegrationEvent(evType int) events.IntegrationEvent[K]
 }
 
 type Aggregate[T, S any] struct {
 	id            uuid.UUID
+	cap           int
 	version       int
 	baseVersion   int
 	changes       []events.Event[T]
@@ -40,11 +42,13 @@ type Aggregate[T, S any] struct {
 
 func NewAggregate[T, S any](
 	id uuid.UUID,
+	cap int,
 	apply func(events.Event[T]) error,
 	applySnapshot func(payload S) error,
 ) *Aggregate[T, S] {
 	return &Aggregate[T, S]{
 		id:            id,
+		cap:           cap,
 		apply:         apply,
 		applySnapshot: applySnapshot,
 		changes:       make([]events.Event[T], 0),
@@ -57,6 +61,10 @@ func (a *Aggregate[T, S]) Changes() []events.Event[T] {
 
 func (a *Aggregate[T, S]) ID() uuid.UUID {
 	return a.id
+}
+
+func (a *Aggregate[T, S]) Cap() int {
+	return a.cap
 }
 
 func (a *Aggregate[T, S]) Version() int {

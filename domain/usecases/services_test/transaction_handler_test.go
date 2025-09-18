@@ -84,14 +84,14 @@ func TestTransactionHandler_HandleMethod(t *testing.T) {
 					GetSubscription(tc.ctx, expectedExecutor).
 					Return(expectedSubscription, nil)
 				eventStoreMock.EXPECT().
-					GetNewEventsAndHistory(
+					GetUnhandledEvents(
 						tc.ctx,
 						expectedID,
 						expectedLastSequenceID,
 						tc.transaction.SequenceID,
 						expectedExecutor,
 					).
-					Return(nil, nil, errExpected)
+					Return(nil, errExpected)
 				eventStoreMock.EXPECT().Rollback(tc.ctx, expectedExecutor).Return(nil)
 			},
 			dataAssertion: func(actual error) {
@@ -108,15 +108,18 @@ func TestTransactionHandler_HandleMethod(t *testing.T) {
 					GetSubscription(tc.ctx, expectedExecutor).
 					Return(expectedSubscription, nil)
 				eventStoreMock.EXPECT().
-					GetNewEventsAndHistory(
+					GetUnhandledEvents(
 						tc.ctx,
 						expectedID,
 						expectedLastSequenceID,
 						tc.transaction.SequenceID,
 						expectedExecutor,
 					).
-					Return(expectedEvents, expectedEvents, nil)
-				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
+					Return(expectedEvents, nil)
+				eventStoreMock.EXPECT().
+					GetSnapshot(tc.ctx, expectedID, &expectedEvents[0].Version, expectedExecutor).
+					Return(0, nil, nil)
+				aggregateProviderMock.EXPECT().ID().Return(expectedID)
 				eventHandlerMock.EXPECT().
 					HandleEvents(tc.ctx, aggregateProviderMock, expectedEvents).
 					Return(errExpected)
@@ -136,14 +139,17 @@ func TestTransactionHandler_HandleMethod(t *testing.T) {
 					GetSubscription(tc.ctx, expectedExecutor).
 					Return(expectedSubscription, nil)
 				eventStoreMock.EXPECT().
-					GetNewEventsAndHistory(
+					GetUnhandledEvents(
 						tc.ctx, expectedID,
 						expectedLastSequenceID,
 						tc.transaction.SequenceID,
 						expectedExecutor,
 					).
-					Return(expectedEvents, expectedEvents, nil)
-				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
+					Return(expectedEvents, nil)
+				eventStoreMock.EXPECT().
+					GetSnapshot(tc.ctx, expectedID, &expectedEvents[0].Version, expectedExecutor).
+					Return(0, nil, nil)
+				aggregateProviderMock.EXPECT().ID().Return(expectedID)
 				eventHandlerMock.EXPECT().
 					HandleEvents(tc.ctx, aggregateProviderMock, expectedEvents).
 					Return(nil)
@@ -170,15 +176,18 @@ func TestTransactionHandler_HandleMethod(t *testing.T) {
 					GetSubscription(tc.ctx, expectedExecutor).
 					Return(expectedSubscription, nil)
 				eventStoreMock.EXPECT().
-					GetNewEventsAndHistory(
+					GetUnhandledEvents(
 						tc.ctx,
 						expectedID,
 						expectedLastSequenceID,
 						tc.transaction.SequenceID,
 						expectedExecutor,
 					).
-					Return(expectedEvents, expectedEvents, nil)
-				aggregateProviderMock.EXPECT().Build(expectedEvents).Return(nil)
+					Return(expectedEvents, nil)
+				eventStoreMock.EXPECT().
+					GetSnapshot(tc.ctx, expectedID, &expectedEvents[0].Version, expectedExecutor).
+					Return(0, nil, nil)
+				aggregateProviderMock.EXPECT().ID().Return(expectedID)
 				eventHandlerMock.EXPECT().
 					HandleEvents(tc.ctx, aggregateProviderMock, expectedEvents).
 					Return(nil)

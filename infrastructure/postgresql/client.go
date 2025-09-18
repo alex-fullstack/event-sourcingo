@@ -14,11 +14,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Config struct {
-	cfg                        *pgxpool.Config
-	snapshotEventMultiplicator int
-}
-
 type Transaction pgx.Tx
 
 type PostgresDB[T, S any] struct {
@@ -26,15 +21,11 @@ type PostgresDB[T, S any] struct {
 	snapshotEventMultiplicator int
 }
 
-func NewConfig(cfg *pgxpool.Config, snapshotEventMultiplicator int) Config {
-	return Config{cfg: cfg, snapshotEventMultiplicator: snapshotEventMultiplicator}
-}
-
 func NewPostgresDB[T, S any](
 	ctx context.Context,
-	config Config,
+	cfg *pgxpool.Config,
 ) (*PostgresDB[T, S], error) {
-	pool, err := pgxpool.NewWithConfig(ctx, config.cfg)
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -42,45 +33,42 @@ func NewPostgresDB[T, S any](
 		return nil, err
 	}
 	return &PostgresDB[T, S]{
-		pool:                       pool,
-		snapshotEventMultiplicator: config.snapshotEventMultiplicator,
+		pool: pool,
 	}, nil
 }
 
-func (db *PostgresDB[T, S]) Acquire(
-	ctx context.Context,
-) (*pgxpool.Conn, error) {
+func (db *PostgresDB[T, S]) Acquire(ctx context.Context) (*pgxpool.Conn, error) {
 	return db.pool.Acquire(ctx)
 }
 
-func (db *PostgresDB[T, S]) Begin(
-	ctx context.Context,
-) (Transaction, error) {
+func (db *PostgresDB[T, S]) Begin(ctx context.Context) (Transaction, error) {
 	return db.pool.Begin(ctx)
 }
 
-func (db *PostgresDB[T, S]) Commit(
-	ctx context.Context,
-	tx Transaction,
-) error {
+func (db *PostgresDB[T, S]) Commit(ctx context.Context, tx Transaction) error {
 	return tx.Commit(ctx)
 }
 
-func (db *PostgresDB[T, S]) Rollback(
-	ctx context.Context,
-	tx Transaction,
-) error {
+func (db *PostgresDB[T, S]) Rollback(ctx context.Context, tx Transaction) error {
 	return tx.Rollback(ctx)
 }
 
-func (db *PostgresDB[T, S]) GetLastSnapshot(
+func (db *PostgresDB[T, S]) GetSnapshot(
 	ctx context.Context,
 	id uuid.UUID,
+	versionAfter *int,
 	tx Transaction,
 ) (int, S, error) {
 	query := `SELECT version, payload FROM es.snapshots WHERE aggregate_id = @id ORDER BY version DESC LIMIT 1`
 	args := pgx.NamedArgs{
 		"id": id,
+	}
+	if versionAfter != nil {
+		query = `SELECT version, payload FROM es.snapshots WHERE aggregate_id = @id AND version < @versionAfter ORDER BY version DESC LIMIT 1`
+		args = pgx.NamedArgs{
+			"id":           id,
+			"versionAfter": *versionAfter,
+		}
 	}
 	var payload S
 	var version int
@@ -109,16 +97,25 @@ func (db *PostgresDB[T, S]) GetLastSnapshot(
 	return version, payload, nil
 }
 
-func (db *PostgresDB[T, S]) GetHistory(
+func (db *PostgresDB[T, S]) GetEvents(
 	ctx context.Context,
 	id uuid.UUID,
 	fromVersion int,
+	toVersion *int,
 	tx Transaction,
 ) ([]events.Event[T], error) {
 	query := `SELECT aggregate_id, transaction_id, version, command_type, event_type, payload, created_at FROM es.events WHERE aggregate_id = @id AND version >= @fromVersion` //nolint:lll
 	args := pgx.NamedArgs{
 		"id":          id,
 		"fromVersion": fromVersion,
+	}
+	if toVersion != nil {
+		query += `AND version <= @toVersion`
+		args = pgx.NamedArgs{
+			"id":          id,
+			"fromVersion": fromVersion,
+			"toVersion":   *toVersion,
+		}
 	}
 	rows, err := tx.Query(ctx, query, args)
 	if err != nil {
@@ -166,21 +163,22 @@ func (db *PostgresDB[T, S]) GetHistory(
 	return result, nil
 }
 
-func (db *PostgresDB[T, S]) GetNewEventsAndHistory(
+func (db *PostgresDB[T, S]) GetUnhandledEvents(
 	ctx context.Context,
 	id uuid.UUID,
 	firstSequenceID, lastSequenceID int64,
 	tx Transaction,
-) ([]events.Event[T], []events.Event[T], error) {
-	query := `SELECT sequence_id::text, e.aggregate_id, transaction_id, version, command_type, event_type, payload, created_at FROM es.transactions AS t JOIN es.events AS e ON e.transaction_id=t.id WHERE sequence_id <= @lastSequenceId::xid8 AND t.aggregate_id=@aggregateId ORDER BY sequence_id` //nolint:lll
+) ([]events.Event[T], error) {
+	query := `SELECT sequence_id::text, e.aggregate_id, transaction_id, version, command_type, event_type, payload, created_at FROM es.transactions AS t JOIN es.events AS e ON e.transaction_id=t.id WHERE sequence_id > @firstSequenceId AND sequence_id <= @lastSequenceId::xid8 AND t.aggregate_id=@aggregateId ORDER BY sequence_id` //nolint:lll
 	args := pgx.NamedArgs{
-		"lastSequenceId": lastSequenceID,
-		"aggregateId":    id,
+		"firstSequenceId": firstSequenceID,
+		"lastSequenceId":  lastSequenceID,
+		"aggregateId":     id,
 	}
-	var history, newEvents []events.Event[T]
+	var newEvents []events.Event[T]
 	rows, err := tx.Query(ctx, query, args)
 	if err != nil {
-		return history, newEvents, err
+		return newEvents, err
 	}
 	defer rows.Close()
 
@@ -202,11 +200,11 @@ func (db *PostgresDB[T, S]) GetNewEventsAndHistory(
 			&createdAt,
 		)
 		if err != nil {
-			return []events.Event[T]{}, []events.Event[T]{}, err
+			return []events.Event[T]{}, err
 		}
-		seqID, errParse := strconv.ParseInt(sequenceID, 10, 64)
+		_, errParse := strconv.ParseInt(sequenceID, 10, 64)
 		if errParse != nil {
-			return []events.Event[T]{}, []events.Event[T]{}, errParse
+			return []events.Event[T]{}, errParse
 		}
 		event := events.Event[T]{
 			TransactionID: transactionID,
@@ -217,16 +215,12 @@ func (db *PostgresDB[T, S]) GetNewEventsAndHistory(
 			Payload:       payload,
 			CreatedAt:     &createdAt,
 		}
-		if seqID <= firstSequenceID {
-			history = append(history, event)
-		} else {
-			newEvents = append(newEvents, event)
-		}
+		newEvents = append(newEvents, event)
 	}
 	if err = rows.Err(); err != nil {
-		return []events.Event[T]{}, []events.Event[T]{}, err
+		return []events.Event[T]{}, err
 	}
-	return history, newEvents, nil
+	return newEvents, nil
 }
 
 func (db *PostgresDB[T, S]) UpdateOrCreateAggregate(
@@ -235,7 +229,7 @@ func (db *PostgresDB[T, S]) UpdateOrCreateAggregate(
 	reader entities.AggregateReader[T],
 	snapshot S,
 	tx Transaction,
-) (int, error) {
+) error {
 	currentVersion, nextVersion := reader.BaseVersion(), reader.Version()
 	var err error
 	if currentVersion == 0 {
@@ -244,22 +238,21 @@ func (db *PostgresDB[T, S]) UpdateOrCreateAggregate(
 		err = db.updateVersion(ctx, reader.ID(), currentVersion, nextVersion, tx)
 	}
 	if err != nil {
-		return 0, err
+		return err
 	}
-	offset := nextVersion / db.snapshotEventMultiplicator
-	if nextVersion/db.snapshotEventMultiplicator > currentVersion/db.snapshotEventMultiplicator {
+
+	if nextVersion/reader.Cap() > currentVersion/reader.Cap() {
 		err = db.insertSnapshot(ctx, reader.ID(), nextVersion, snapshot, tx)
 		if err != nil {
-			return 0, err
+			return err
 		}
-		offset--
 	}
 
 	err = db.insertEvents(ctx, reader.Changes(), tx)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return offset, db.insertTransaction(
+	return db.insertTransaction(
 		ctx,
 		transactionID,
 		reader.ID(),

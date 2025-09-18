@@ -35,7 +35,10 @@ func (eh *eventHandler[T, S, P, K]) HandleEvents(
 		if err != nil {
 			return err
 		}
-		integrationEvents = append(integrationEvents, provider.IntegrationEvent(event.Type))
+		integrationEvents = append(
+			integrationEvents,
+			provider.IntegrationEvent(event.Type),
+		)
 	}
 	return eh.publisher.Publish(ctx, integrationEvents)
 }

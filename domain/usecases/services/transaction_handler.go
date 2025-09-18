@@ -1,10 +1,13 @@
 package services
 
 import (
+	"cmp"
 	"context"
 	"log/slog"
+	"slices"
 
 	"github.com/alex-fullstack/event-sourcingo/domain/entities"
+	"github.com/alex-fullstack/event-sourcingo/domain/events"
 	"github.com/alex-fullstack/event-sourcingo/domain/subscriptions"
 	"github.com/alex-fullstack/event-sourcingo/domain/transactions"
 	"github.com/alex-fullstack/event-sourcingo/domain/usecases/repositories"
@@ -61,7 +64,7 @@ func (eh *transactionHandler[T, S, P, K, E]) Handle(
 		eh.log.ErrorContext(ctx, err.Error())
 		return err
 	}
-	history, newEvents, err := eh.eventStore.GetNewEventsAndHistory(
+	newEvents, err := eh.eventStore.GetUnhandledEvents(
 		ctx,
 		transaction.AggregateID,
 		sub.LastSequenceID,
@@ -72,11 +75,49 @@ func (eh *transactionHandler[T, S, P, K, E]) Handle(
 		eh.log.ErrorContext(ctx, err.Error())
 		return err
 	}
+	firstNxtVersion := slices.MinFunc(newEvents, func(a, b events.Event[T]) int {
+		return cmp.Compare(a.Version, b.Version)
+	}).Version
+
 	provider := providerFn(transaction.AggregateID)
-	err = provider.Build(history)
+
+	version, payload, err := eh.eventStore.GetSnapshot(
+		ctx,
+		provider.ID(),
+		&firstNxtVersion,
+		commitExecutor,
+	)
 	if err != nil {
 		eh.log.ErrorContext(ctx, err.Error())
 		return err
+	}
+	var currentVersion int
+	if version == 0 {
+		currentVersion = -1
+	} else {
+		currentVersion = version
+		if err = provider.BuildFromSnapshot(version, payload); err != nil {
+			return err
+		}
+	}
+	lastVersion := firstNxtVersion - 1
+	if lastVersion > currentVersion {
+		var history []events.Event[T]
+		history, err = eh.eventStore.GetEvents(
+			ctx,
+			provider.ID(),
+			currentVersion+1,
+			&lastVersion,
+			commitExecutor,
+		)
+		if err != nil {
+			return err
+		}
+		err = provider.Build(history)
+		if err != nil {
+			eh.log.ErrorContext(ctx, err.Error())
+			return err
+		}
 	}
 	err = eh.eventHandler.HandleEvents(ctx, provider, newEvents)
 	if err != nil {

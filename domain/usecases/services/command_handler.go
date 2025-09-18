@@ -49,12 +49,11 @@ func (ch *commandHandler[T, S, P, K, E]) Handle(
 			err = ch.store.Commit(ctx, commitExecutor)
 		}
 	}()
-	var offset int
-	offset, err = ch.changeAggregate(ctx, cmd, uuid.New(), aggregate, commitExecutor)
+	err = ch.changeAggregate(ctx, cmd, uuid.New(), aggregate, commitExecutor)
 	if err != nil {
 		return err
 	}
-	return ch.saver.Save(ctx, aggregate.Projection(offset))
+	return ch.saver.Save(ctx, aggregate.Projection())
 }
 
 func (ch *commandHandler[T, S, P, K, E]) changeAggregate(
@@ -63,10 +62,10 @@ func (ch *commandHandler[T, S, P, K, E]) changeAggregate(
 	transactionID uuid.UUID,
 	aggregate entities.AggregateProvider[T, S, P, K],
 	commitExecutor E,
-) (int, error) {
-	version, payload, err := ch.store.GetLastSnapshot(ctx, aggregate.ID(), commitExecutor)
+) error {
+	version, payload, err := ch.store.GetSnapshot(ctx, aggregate.ID(), nil, commitExecutor)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	var currentVersion int
 	if version == 0 {
@@ -74,17 +73,17 @@ func (ch *commandHandler[T, S, P, K, E]) changeAggregate(
 	} else {
 		currentVersion = version
 		if err = aggregate.BuildFromSnapshot(version, payload); err != nil {
-			return 0, err
+			return err
 		}
 	}
 
 	var history []events.Event[T]
-	history, err = ch.store.GetHistory(ctx, aggregate.ID(), currentVersion+1, commitExecutor)
+	history, err = ch.store.GetEvents(ctx, aggregate.ID(), currentVersion+1, nil, commitExecutor)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	if err = aggregate.Build(history); err != nil {
-		return 0, err
+		return err
 	}
 	newEvents := make([]events.Event[T], len(cmd.Events))
 	for i, event := range cmd.Events {
@@ -98,7 +97,7 @@ func (ch *commandHandler[T, S, P, K, E]) changeAggregate(
 		)
 	}
 	if err = aggregate.ApplyChanges(newEvents); err != nil {
-		return 0, err
+		return err
 	}
 	return ch.store.UpdateOrCreateAggregate(
 		ctx,

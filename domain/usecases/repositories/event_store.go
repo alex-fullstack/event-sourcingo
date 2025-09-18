@@ -23,24 +23,26 @@ type EventStore[T, S, E any] interface {
 		reader entities.AggregateReader[T],
 		snapshot S,
 		executor E,
-	) (snapshotCount int, err error)
-	GetLastSnapshot(
+	) error
+	GetSnapshot(
 		ctx context.Context,
 		id uuid.UUID,
+		versionAfter *int,
 		executor E,
 	) (int, S, error)
-	GetHistory(
+	GetEvents(
 		ctx context.Context,
 		id uuid.UUID,
 		fromVersion int,
+		toVersion *int,
 		executor E,
 	) ([]events.Event[T], error)
-	GetNewEventsAndHistory(
+	GetUnhandledEvents(
 		ctx context.Context,
 		id uuid.UUID,
 		firstSequenceID, lastSequenceID int64,
 		executor E,
-	) ([]events.Event[T], []events.Event[T], error)
+	) ([]events.Event[T], error)
 	GetSubscription(ctx context.Context, executor E) (*subscriptions.Subscription, error)
 	UpdateSubscription(
 		ctx context.Context,
