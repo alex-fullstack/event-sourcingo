@@ -17,8 +17,7 @@ import (
 type Transaction pgx.Tx
 
 type PostgresDB[T, S any] struct {
-	pool                       *pgxpool.Pool
-	snapshotEventMultiplicator int
+	pool *pgxpool.Pool
 }
 
 func NewPostgresDB[T, S any](
@@ -64,7 +63,7 @@ func (db *PostgresDB[T, S]) GetSnapshot(
 		"id": id,
 	}
 	if versionAfter != nil {
-		query = `SELECT version, payload FROM es.snapshots WHERE aggregate_id = @id AND version < @versionAfter ORDER BY version DESC LIMIT 1`
+		query = `SELECT version, payload FROM es.snapshots WHERE aggregate_id = @id AND version < @versionAfter ORDER BY version DESC LIMIT 1` //nolint:lll
 		args = pgx.NamedArgs{
 			"id":           id,
 			"versionAfter": *versionAfter,

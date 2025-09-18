@@ -42,13 +42,13 @@ type Aggregate[T, S any] struct {
 
 func NewAggregate[T, S any](
 	id uuid.UUID,
-	cap int,
+	capacity int,
 	apply func(events.Event[T]) error,
 	applySnapshot func(payload S) error,
 ) *Aggregate[T, S] {
 	return &Aggregate[T, S]{
 		id:            id,
-		cap:           cap,
+		cap:           capacity,
 		apply:         apply,
 		applySnapshot: applySnapshot,
 		changes:       make([]events.Event[T], 0),
