@@ -109,7 +109,7 @@ func (db *PostgresDB[T, S]) GetEvents(
 		"fromVersion": fromVersion,
 	}
 	if toVersion != nil {
-		query += `AND version <= @toVersion`
+		query = `SELECT aggregate_id, transaction_id, version, command_type, event_type, payload, created_at FROM es.events WHERE aggregate_id = @id AND version >= @fromVersion AND version <= @toVersion` //nolint:lll
 		args = pgx.NamedArgs{
 			"id":          id,
 			"fromVersion": fromVersion,
